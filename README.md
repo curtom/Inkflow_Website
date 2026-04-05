@@ -1,0 +1,1 @@
+### I create this project a blog platform to practice my front-end skills.
