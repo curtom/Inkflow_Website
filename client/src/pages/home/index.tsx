@@ -22,7 +22,7 @@ export default function HomePage() {
 
     return (
         <div className="mx-auto max-w-5xl px-4 py-10">
-            <div className="mb-8">
+            <div className="sticky top-16 z-10 -mx-4 mb-8 bg-gray-50 px-4 pb-4 pt-2">
                 <h1 className="text-4xl font-bold text-gray-900">Lastest Articles</h1>
                 <p className="mt-2 text-gray-600">
                     Explore ideas, stories, and Knowledge from creators.

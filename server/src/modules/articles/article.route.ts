@@ -8,6 +8,7 @@ import {
 } from "./article.controller";
 import {validate} from "../../common/middlewares/validate.middleware";
 import {createArticleSchema, getArticleBySlugSchema, getArticleSchema, updateArticleSchema} from "./article.schema";
+import commentRouter from "../comments/comment.route";
 
 const articleRouter = Router();
 
@@ -21,5 +22,6 @@ articleRouter.patch(
     updateArticleController
 );
 articleRouter.delete("/:slug", authMiddleware, deleteArticleController);
+articleRouter.use("/:slug/comments", commentRouter);
 
 export default articleRouter;

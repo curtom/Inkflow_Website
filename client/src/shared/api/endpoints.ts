@@ -8,6 +8,9 @@ export const ENDPOINTS = {
         me: "/users/me",
         updateMe: "/users/me",
     },
+    profile: {
+        myArticles: "/users/me/articles",
+    },
     articles: {
         list: "/articles",
         create: "/articles",
@@ -15,4 +18,13 @@ export const ENDPOINTS = {
         update: (slug: string) => `/articles/${slug}`,
         delete: (slug: string) => `/articles/${slug}`,
     },
+    comments: {
+        list: (slug: string) => `/articles/${slug}/comments`,
+        create: (slug: string) => `/articles/${slug}/comments`,
+        delete: (slug: string, commentId: string) =>
+          `/articles/${slug}/comments/${commentId}`,
+      },
+      uploads: {
+        image: "/uploads/image",
+      },
 };

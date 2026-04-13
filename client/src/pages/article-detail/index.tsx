@@ -4,15 +4,22 @@ import {
     deleteArticleRequest,
     getArticleBySlugRequest,
 } from "@/entities/article/api/article-api";
+import {
+   getCommentsByArticleRequest,
+   createCommentRequest,
+   deleteCommentRequest,
+} from "@/entities/comment/api/comment-api";
 import { queryKeys } from "@/shared/api/query-keys";
 import { useAppSelector } from "@/shared/hooks/redux";
 import DeleteArticleButton from "@/features/delete-article/ui/delete-article-button";
-
+import CommentList from "@/widgets/comment-list";
+import AddCommentForm from "@/features/add-comment/ui/add-comment-form";
 export default function ArticleDetailPage() {
     const { slug = "" } = useParams();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const currentUser = useAppSelector((state) => state.auth.user);
+    const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
     const { data, isLoading, isError } = useQuery({
         queryKey: queryKeys.articles.detail(slug),
@@ -20,7 +27,14 @@ export default function ArticleDetailPage() {
         enabled: Boolean(slug),
     });
 
+    const commentsQuery = useQuery({
+        queryKey: queryKeys.articles.comments(slug),
+        queryFn: () => getCommentsByArticleRequest(slug),
+        enabled: Boolean(slug),
+    });
+
     const article = data?.article;
+    const comments = commentsQuery.data?.data.comments ?? [];
     const isAuthor = currentUser?.id && article?.author.id === currentUser.id;
 
     const deleteMutation = useMutation({
@@ -30,6 +44,24 @@ export default function ArticleDetailPage() {
             navigate("/");
         },
     });
+
+    const createCommentMutation = useMutation({
+        mutationFn: (content: string) => createCommentRequest(slug, content),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: queryKeys.articles.comments(slug),
+            });
+        },
+    });
+
+    const deleteCommentMutation = useMutation({
+        mutationFn: (commentId: string) => deleteCommentRequest(slug, commentId),
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({
+            queryKey: queryKeys.articles.comments(slug),
+          });
+        },
+      });
 
     if (isLoading) {
         return <div className="mx-auto max-w-4xl px-4 py-10">Loading article...</div>;
@@ -96,6 +128,39 @@ export default function ArticleDetailPage() {
                     />
                 </div>
             ) : null}
+
+            <section className="mt-14">
+                <h2 className="mb-4 text-2xl font-bold text-gray-900">Comments</h2>
+
+                {isAuthenticated ? (
+                    <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                        <AddCommentForm 
+                          loading={createCommentMutation.isPending}
+                          onSubmit={async (content) => {
+                            await createCommentMutation.mutateAsync(content);
+                          }}
+                        />
+                    </div>
+                ) : (
+                    <p className="mb-6 text-gray-600">
+                        Please log in to leave a comment.
+                    </p>
+                )}
+
+                {commentsQuery.isLoading ? <p>Loading comments...</p> : null}
+                {commentsQuery.isError ? <p>Error loading comments.</p> : null}
+                {!commentsQuery.isLoading && !commentsQuery.isError ? (
+                    <CommentList 
+                      comments={comments}
+                      deletingId={
+                        deleteCommentMutation.isPending ? String(deleteCommentMutation.variables ?? "") : null
+                      }
+                      onDelete={async (commentId) => {
+                        await deleteCommentMutation.mutateAsync(commentId);
+                      }}
+                    />
+                ) : null}
+            </section>
         </div>
     );
 }

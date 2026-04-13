@@ -3,7 +3,8 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import Input from "@/shared/ui/input.tsx";
 import Button from "@/shared/ui/button.tsx";
-
+import ImageUploadField from "@/features/upload-image/ui/image-upload-field.tsx";
+import {useEffect} from "react";
 
 type ArticleFormProps = {
     defaultValues?: Partial<ArticleFormValues>;
@@ -21,6 +22,9 @@ export default function ArticleForm({
     const {
         register,
         handleSubmit,
+        setValue,
+        watch,
+        reset,
         formState: { errors, isSubmitting },
     } = useForm<ArticleFormValues>({
         resolver: zodResolver(articleSchema),
@@ -32,6 +36,18 @@ export default function ArticleForm({
             tags: defaultValues?.tags ?? "",
         },
     });
+
+    useEffect(() => {
+       reset({
+        title: defaultValues?.title ?? "",
+        summary: defaultValues?.summary ?? "",
+        content: defaultValues?.content ?? "",
+        coverImage: defaultValues?.coverImage ?? "",
+        tags: defaultValues?.tags ?? "",
+      });
+    }, [defaultValues, reset]);
+
+    const coverImage = watch("coverImage");
 
     return (
         <form
@@ -72,6 +88,12 @@ export default function ArticleForm({
                placeholder="Enter cover image URL"
                error={errors.coverImage?.message}
                {...register("coverImage")}
+            />
+
+            <ImageUploadField
+              label = "Or upload a cover image"
+              value={coverImage ?? ""}
+              onUploaded={(url) => setValue("coverImage", url, {shouldValidate: true})}
             />
 
             <Input

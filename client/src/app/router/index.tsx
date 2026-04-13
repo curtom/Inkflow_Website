@@ -7,22 +7,37 @@ import NotFoundPage from "@/pages/not-found";
 import ArticleDetailPage from "@/pages/article-detail";
 import CreateArticlePage from "@/pages/editor/create-article-page";
 import EditArticlePage from "@/pages/editor/edit-article-page";
+import SettingsPage from "@/pages/settings";
+import ProfilePage from "@/pages/profile";
+import { GuestRoute, ProtectedRoute } from "./route-guards";
 
 export const router = createBrowserRouter([
-    {
-        path: "/",
-        element: <MainLayout />,
+  {
+    path: "/",
+    element: <MainLayout />,
+    children: [
+      { index: true, element: <HomePage /> },
+      {
+        element: <GuestRoute />,
         children: [
-            { index: true, element: <HomePage /> },
-            { path: "login", element: <LoginPage /> },
-            { path: "register", element: <RegisterPage /> },
-            { path: "articles/:slug", element: <ArticleDetailPage /> },
-            { path: "editor", element: <CreateArticlePage /> },
-            { path: "editor/:slug", element: <EditArticlePage /> },
+          { path: "login", element: <LoginPage /> },
+          { path: "register", element: <RegisterPage /> },
         ],
-    },
-    {
-        path: "*",
-        element: <NotFoundPage />,
-    },
+      },
+      { path: "articles/:slug", element: <ArticleDetailPage /> },
+      {
+        element: <ProtectedRoute />,
+        children: [
+          { path: "editor", element: <CreateArticlePage /> },
+          { path: "editor/:slug", element: <EditArticlePage /> },
+          { path: "settings", element: <SettingsPage /> },
+          { path: "profile", element: <ProfilePage /> },
+        ],
+      },
+    ],
+  },
+  {
+    path: "*",
+    element: <NotFoundPage />,
+  },
 ]);
