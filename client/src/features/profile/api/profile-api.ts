@@ -35,3 +35,9 @@ export async function getMyProfileRequest() {
 export async function getMyArticlesRequest(page = 1, limit = 10) {
     return (await api.get(ENDPOINTS.profile.myArticles, {params: {page, limit}})) as unknown as ProfileArticlesResponse;
 }
+
+export async function getMyFavoriteArticlesRequest(page = 1, limit = 10) {
+    return (await api.get(ENDPOINTS.profile.myFavorites, {
+        params: {page, limit},
+    })) as unknown as ProfileArticlesResponse;
+}

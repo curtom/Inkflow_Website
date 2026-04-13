@@ -30,6 +30,9 @@ type ArticleDocumentLike = {
     coverImage?: string;
     tags: string[];
     author: ArticleAuthor;
+    likesCount: number;
+    favoritesCount: number;
+    commentsCount: number;
     createdAt: Date;
     updatedAt: Date;
 };
@@ -44,6 +47,9 @@ function sanitizeArticle(article: ArticleDocumentLike) {
         coverImage: article.coverImage ?? "",
         tags: article.tags ?? [],
         author: sanitizeAuthor(article.author),
+        likesCount: article.likesCount ?? 0,
+        favoritesCount: article.favoritesCount ?? 0,
+        commentsCount: article.commentsCount ?? 0,
         createdAt: article.createdAt,
         updatedAt: article.updatedAt,
     };

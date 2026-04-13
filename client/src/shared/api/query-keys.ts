@@ -8,6 +8,8 @@ export const queryKeys = {
     profile: {
         myArticles: (page: number, limit: number) =>
           ["profile", "my-articles", page, limit] as const,
+        myFavorites: (page: number, limit: number) =>
+          ["profile", "my-favorites", page, limit] as const,
       },
     articles: {
         list: (page: number, limit: number) =>

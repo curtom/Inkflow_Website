@@ -1,5 +1,6 @@
 import { Link } from "react-router"
 import type {Article} from "@/entities/article";
+import ArticleReactionBar from "@/features/reactions/ui/article-reaction-bar";
 
 type Props = {
     article: Article
@@ -50,9 +51,12 @@ export default function ArticleCard({ article }: Props ) {
                     </div>
                 ) : null}
 
-                <p className="mt-4 text-sm font-medium text-green-600">
-                    Read More →
-                </p>
+                <ArticleReactionBar
+                   slug={article.slug}
+                   likesCount={article.likesCount}
+                   commentsCount={article.commentsCount}
+                   favoritesCount={article.favoritesCount}
+                />
             </article>
         </Link>
     );

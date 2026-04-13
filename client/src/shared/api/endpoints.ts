@@ -10,6 +10,7 @@ export const ENDPOINTS = {
     },
     profile: {
         myArticles: "/users/me/articles",
+        myFavorites: "/users/me/favorites",
     },
     articles: {
         list: "/articles",
@@ -23,6 +24,10 @@ export const ENDPOINTS = {
         create: (slug: string) => `/articles/${slug}/comments`,
         delete: (slug: string, commentId: string) =>
           `/articles/${slug}/comments/${commentId}`,
+      },
+      reactions: {
+        like: (slug: string) => `/articles/${slug}/reactions/like`,
+        favorite: (slug: string) => `/articles/${slug}/reactions/favorite`,
       },
       uploads: {
         image: "/uploads/image",

@@ -9,6 +9,11 @@ export interface IArticle extends Document {
     coverImage?: string;
     tags: string[];
     author: Types.ObjectId;
+    likedBy: Types.ObjectId[];
+    favoritedBy: Types.ObjectId[];
+    likesCount: number;
+    favoritesCount: number;
+    commentsCount: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -51,6 +56,28 @@ const articleSchema = new Schema<IArticle>(
             ref: "User",
             required: true,
         },
+        likedBy: {
+            type: [Schema.Types.ObjectId],
+            ref: "User",
+            default: [],
+          },
+          favoritedBy: {
+            type: [Schema.Types.ObjectId],
+            ref: "User",
+            default: [],
+          },
+          likesCount: {
+            type: Number,
+            default: 0,
+          },
+          favoritesCount: {
+            type: Number,
+            default: 0,
+          },
+          commentsCount: {
+            type: Number,
+            default: 0,
+          },
     },
     {
         timestamps: true,

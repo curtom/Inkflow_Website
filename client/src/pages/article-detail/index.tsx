@@ -9,6 +9,10 @@ import {
    createCommentRequest,
    deleteCommentRequest,
 } from "@/entities/comment/api/comment-api";
+import {
+    toggleFavoriteArticleRequest,
+    toggleLikeArticleRequest,
+  } from "@/features/reactions/api/reaction-api";
 import { queryKeys } from "@/shared/api/query-keys";
 import { useAppSelector } from "@/shared/hooks/redux";
 import DeleteArticleButton from "@/features/delete-article/ui/delete-article-button";
@@ -63,6 +67,27 @@ export default function ArticleDetailPage() {
         },
       });
 
+      const likeMutation = useMutation({
+        mutationFn: () => toggleLikeArticleRequest(slug),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                 queryKey: queryKeys.articles.detail(slug)
+            });
+            await queryClient.invalidateQueries({ queryKey: ["articles"]});
+        },
+      });
+
+      const favoriteMutation = useMutation({
+        mutationFn: () => toggleFavoriteArticleRequest(slug),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: queryKeys.articles.detail(slug)
+            });
+            await queryClient.invalidateQueries({ queryKey: ["articles"]});
+            await queryClient.invalidateQueries({ queryKey: ["profile"]});
+        },
+      });
+
     if (isLoading) {
         return <div className="mx-auto max-w-4xl px-4 py-10">Loading article...</div>;
     }
@@ -73,14 +98,50 @@ export default function ArticleDetailPage() {
 
     return (
         <div className="mx-auto max-w-4xl px-4 py-10">
-            <p className="text-sm text-gray-500">
-                By {article.author.username} ·{" "}
-                {new Date(article.createdAt).toLocaleDateString()}
-            </p>
+            <div className="flex items-start justify-between gap-4">
+               <div>
+                 <p className="text-sm text-gray-500">
+                    By {article.author.username} ·{" "}
+                    {new Date(article.createdAt).toLocaleDateString()}
+                 </p>
 
-            <h1 className="mt-3 text-4xl font-bold text-gray-900">{article.title}</h1>
+                 <h1 className="mt-3 text-4xl font-bold text-gray-900">{article.title}</h1>
 
-            <p className="mt-4 text-lg text-gray-600">{article.summary}</p>
+                 <p className="mt-4 text-lg text-gray-600">{article.summary}</p>
+               </div>
+
+               <div className="flex shrink-0 gap-2">
+                <button
+                    type="button"
+                    disabled={!isAuthenticated || likeMutation.isPending}
+                    onClick={async () => {
+                    if (!isAuthenticated) {
+                        window.alert("Please log in to like articles.");
+                        return;
+                    }
+                    await likeMutation.mutateAsync();
+                    }}
+                    className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                >
+                    ♡ {article.likesCount}
+                </button>
+
+                <button
+                    type="button"
+                    disabled={!isAuthenticated || favoriteMutation.isPending}
+                    onClick={async () => {
+                    if (!isAuthenticated) {
+                        window.alert("Please log in to favorite articles.");
+                        return;
+                    }
+                    await favoriteMutation.mutateAsync();
+                    }}
+                    className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                >
+                    🔖 {article.favoritesCount}
+                </button>
+              </div>
+            </div>
 
             {article.coverImage ? (
                 <img

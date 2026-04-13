@@ -73,6 +73,9 @@ function sanitizeAuthor(author: CommentAuthor) {
         content,
       });
 
+      article.commentsCount += 1;
+      await article.save();
+
       const populatedComment = await Comment.findById(comment._id).populate(
         "author",
         "username email bio avatar"
@@ -109,6 +112,9 @@ function sanitizeAuthor(author: CommentAuthor) {
     }
   
     await Comment.deleteOne({ _id: comment._id });
+
+    article.commentsCount = Math.max(0, article.commentsCount - 1);
+    await article.save();
   
     return {
       deleted: true,

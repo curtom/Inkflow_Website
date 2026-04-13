@@ -1,19 +1,26 @@
-import { getMyArticlesRequest } from "@/features/profile/api/profile-api";
+import { getMyArticlesRequest, getMyProfileRequest, getMyFavoriteArticlesRequest } from "@/features/profile/api/profile-api";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/api/query-keys";
 import ArticleList from "@/widgets/article-list";
-import { getMyProfileRequest } from "@/features/profile/api/profile-api";
+import { useState } from "react";
+import { cn } from "@/shared/lib/cn";
 
 
 export default function ProfilePage() {
+    const [tab, setTab] = useState("published");
+
     const profileQuery = useQuery({
         queryKey: queryKeys.users.me,
         queryFn: getMyProfileRequest,
     });
 
     const articlesQuery = useQuery({
-        queryKey: queryKeys.profile.myArticles(1, 10),
-        queryFn: () => getMyArticlesRequest(1, 10),
+        queryKey:
+         tab === "published"
+        ? queryKeys.profile.myArticles(1, 10) : queryKeys.profile.myFavorites(1, 10),
+        queryFn: () => 
+          tab === "published"
+        ? getMyArticlesRequest(1, 10) : getMyFavoriteArticlesRequest(1, 10),
     });
 
     const user = profileQuery.data?.data.user;
@@ -54,7 +61,37 @@ export default function ProfilePage() {
          </section>
 
          <section>
-         <h2 className="mb-6 text-2xl font-bold text-gray-900">Published Posts</h2>
+            <div className="mb-6 mt-6 flex gap-3 border-b border-gray-200 pb-3">
+                <button
+                    type="button"
+                    onClick={() => setTab("published")}
+                    className={cn(
+                    "rounded-full px-4 py-2 text-sm font-medium transition",
+                    tab === "published"
+                        ? "bg-gray-900 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    )}
+                >
+                    Published
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setTab("favorites")}
+                    className={cn(
+                    "rounded-full px-4 py-2 text-sm font-medium transition",
+                    tab === "favorites"
+                        ? "bg-gray-900 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    )}
+                >
+                    Favorites
+                </button>
+            </div>
+
+            <h2 className="mb-6 text-2xl font-bold text-gray-900">
+                {tab === "published" ? "Published Articles" : "Favorite Articles"}
+            </h2>
             {articlesQuery.isLoading ? <p>Loading posts...</p> : null}
             {articlesQuery.isError ? <p>Failed to load posts.</p> : null}
             {!articlesQuery.isLoading && !articlesQuery.isError ? (

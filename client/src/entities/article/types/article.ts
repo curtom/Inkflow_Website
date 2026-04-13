@@ -15,6 +15,9 @@ export type Article = {
     coverImage?: string;
     tags: string[];
     author: ArticleAuthor;
+    likesCount: number;
+    favoritesCount: number;
+    commentsCount: number;
     createdAt: string;
     updatedAt: string;
 };
