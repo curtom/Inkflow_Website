@@ -29,8 +29,10 @@ export async function getArticlesController(
     try {
         const page = typeof req.query.page === 'string' ? Number(req.query.page) : undefined;
         const limit = typeof req.query.limit === 'string' ? Number(req.query.limit) : undefined;
+        const tag = typeof req.query.tag === 'string' ? req.query.tag : undefined;
+        const userId = req.user?.userId;
 
-        const result = await getArticles({page, limit});
+        const result = await getArticles({page, limit, tag, userId});
         res.status(200).json(successResponse("Articles fetched successfully", result));
     }catch (error) {
         next(error);
@@ -44,7 +46,8 @@ export async function getArticleBySlugController(
 ) {
     try {
        const { slug } = req.params;
-       const result = await getArticleBySlug(slug as string);
+       const userId = req.user?.userId;
+       const result = await getArticleBySlug(slug as string, userId);
 
        res.status(200).json(successResponse("Article fetched successfully", result));
     }catch (error) {

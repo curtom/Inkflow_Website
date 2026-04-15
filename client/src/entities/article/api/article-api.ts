@@ -10,12 +10,13 @@ import { ENDPOINTS } from "@/shared/api/endpoints";
 
 export async function getArticlesRequest(
     page = 1,
-    limit = 10
+    limit = 10,
+    tag?: string
 ): Promise<ArticleListData> {
     const response = (await api.get(
         ENDPOINTS.articles.list,
         {
-            params: { page, limit },
+            params: { page, limit, ...(tag ? { tag } : {}) },
         }
     )) as unknown as ApiResponse<ArticleListData>;
 

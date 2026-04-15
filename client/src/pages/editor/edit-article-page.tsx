@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router";
 import ArticleForm from "@/features/create-article/ui/article-form";
+import { clearDraft } from "@/features/create-article/lib/draft";
 import {
     getArticleBySlugRequest,
     updateArticleRequest,
@@ -18,7 +19,8 @@ function normalizeTags(tags?: string) {
     return tags
         .split(",")
         .map((tag) => tag.trim())
-        .filter(Boolean);
+        .filter(Boolean)
+        .slice(0, 4);
 }
 
 export default function EditArticlePage() {
@@ -36,10 +38,13 @@ export default function EditArticlePage() {
     const article = data?.article;
     const isAuthor = currentUser?.id && article?.author.id === currentUser.id;
 
+    const draftKey = `inkflow:draft:edit:${slug}`;
+
     const updateMutation = useMutation({
         mutationFn: (payload: Parameters<typeof updateArticleRequest>[1]) =>
             updateArticleRequest(slug, payload),
         onSuccess: async (response) => {
+            clearDraft(draftKey);
             await queryClient.invalidateQueries({ queryKey: ["articles"] });
             await queryClient.invalidateQueries({ queryKey: queryKeys.articles.detail(slug) });
             navigate(`/articles/${response.article.slug}`);
@@ -69,23 +74,22 @@ export default function EditArticlePage() {
     };
 
     return (
-        <div className="mx-auto max-w-3xl px-4 py-10">
-            <h1 className="mb-6 text-3xl font-bold text-gray-900">Edit article</h1>
-
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <ArticleForm
-                    submitText="Update Article"
-                    loading={updateMutation.isPending}
-                    onSubmit={handleSubmit}
-                    defaultValues={{
-                        title: article.title,
-                        summary: article.summary,
-                        content: article.content,
-                        coverImage: article.coverImage ?? "",
-                        tags: toTagInput(article.tags),
-                    }}
-                />
-            </div>
+        <div className="mx-auto max-w-6xl px-4 py-6">
+          <h1 className="mb-4 text-3xl font-bold text-gray-900">Edit Post</h1>
+    
+          <ArticleForm
+            submitText="Update"
+            loading={updateMutation.isPending}
+            draftKey={draftKey}
+            onSubmit={handleSubmit}
+            defaultValues={{
+              title: article.title,
+              summary: article.summary,
+              content: article.content,
+              coverImage: article.coverImage ?? "",
+              tags: toTagInput(article.tags),
+            }}
+          />
         </div>
-    );
+      );
 }

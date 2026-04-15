@@ -1,5 +1,6 @@
 import { cn } from "@/shared/lib/cn";
 import { NavLink } from "react-router";
+import { House, Settings, User, SquarePen } from 'lucide-react';
 
 type SidebarProps = {
     open: boolean;
@@ -7,7 +8,7 @@ type SidebarProps = {
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-        "block rounded-lg px-4 py-3 text-base transition",
+        "flex items-center gap-3 rounded-lg px-4 py-3 text-base transition",
         isActive ? "bg-green-50 font-medium text-green-600"
         : "text-gray-700 hover:bg-gray-100"
     );
@@ -27,18 +28,22 @@ export default function Sidebar({ open }: SidebarProps) {
               
               <nav className="space-y-2 px-4 py-6">
                 <NavLink to="/" className={linkClass} end>
+                    <House className="w-5 h-5" />
                     Home
                 </NavLink>
 
                 <NavLink to="/profile" className={linkClass}>
+                    <User className="w-5 h-5" />
                     Profile
                 </NavLink>
 
                 <NavLink to="/editor" className={linkClass}>
-                    Stories
+                    <SquarePen className="w-5 h-5" />
+                    Write
                 </NavLink>
 
                 <NavLink to="/settings" className={linkClass}>
+                    <Settings className="w-5 h-5" />
                     Settings
                 </NavLink>
                </nav>

@@ -10,11 +10,12 @@ export default function HomePage() {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const page = Number(searchParams.get("page") || "1");
+    const tag = searchParams.get("tag") || "";
     const limit = 10;
 
     const { data, isLoading, isError } = useQuery({
-        queryKey: queryKeys.articles.list(page, limit),
-        queryFn: () => getArticlesRequest(page, limit),
+        queryKey: queryKeys.articles.list(page, limit, tag),
+        queryFn: () => getArticlesRequest(page, limit, tag || undefined),
     });
 
     const articles = data?.articles ?? [];
@@ -22,11 +23,25 @@ export default function HomePage() {
 
     return (
         <div className="mx-auto max-w-5xl px-4 py-10">
-            <div className="sticky top-16 z-10 -mx-4 mb-8 bg-gray-50 px-4 pb-4 pt-2">
-                <h1 className="text-4xl font-bold text-gray-900">Lastest Articles</h1>
-                <p className="mt-2 text-gray-600">
-                    Explore ideas, stories, and Knowledge from creators.
-                </p>
+            <div className="sticky top-16 z-10 -mx-4 mb-8 bg-gray-50 px-4 pb-4 pt-2 flex items-start justify-between gap-4">
+                <div>
+                    <h1 className="text-4xl font-bold text-gray-900">{tag ? `Tag: ${tag}` : "Home"}</h1>
+                    <p className="mt-2 text-gray-600">
+                    {tag ? "Showing articles filtered by topic."
+                     : " Explore ideas, stories, and Knowledge from creators."}
+                    </p>
+                </div>
+
+                {tag ? (
+                <Button
+                type="button"
+                onClick={() => {
+                setSearchParams({});
+                }}
+                 >
+                Clear Filter
+                </Button>
+               ) : null}
             </div>
 
             {isLoading ? <p>Loading articles...</p> : null}

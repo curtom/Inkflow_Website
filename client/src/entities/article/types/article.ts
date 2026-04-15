@@ -18,6 +18,8 @@ export type Article = {
     likesCount: number;
     favoritesCount: number;
     commentsCount: number;
+    isLiked: boolean;
+    isFavorited: boolean;
     createdAt: string;
     updatedAt: string;
 };

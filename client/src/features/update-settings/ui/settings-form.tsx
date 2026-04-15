@@ -73,15 +73,9 @@ export default function SettingsForm({
                 ) : null}
             </div>
 
-            <Input
-                label="Avatar URL"
-                placeholder="https://example.com/avatar.jpg"
-                error={errors.avatar?.message}
-                {...register("avatar")}
-            />
-
             <ImageUploadField
-               label="Or upload an avatar"
+               label="Upload Profile Picture"
+               layout="horizontal"
                value={avatar ?? ""}
                onUploaded={(url) => setValue("avatar", url, {shouldValidate: true})}
             />

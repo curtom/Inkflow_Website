@@ -23,3 +23,34 @@ a {
     color: inherit;
     text-decoration: none;
 }
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+  scroll-margin-top: 100px;
+}
+
+.markdown-preview img {
+  max-width: 100%;
+  border-radius: 16px;
+}
+
+.markdown-preview pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.markdown-preview a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: #93c5fd;
+}
+
+.markdown-preview a:hover {
+  color: #1e40af;
+}

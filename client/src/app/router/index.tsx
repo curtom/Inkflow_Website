@@ -10,6 +10,8 @@ import EditArticlePage from "@/pages/editor/edit-article-page";
 import SettingsPage from "@/pages/settings";
 import ProfilePage from "@/pages/profile";
 import { GuestRoute, ProtectedRoute } from "./route-guards";
+import SearchPage from "@/pages/search";
+import PublicProfilePage from "@/pages/public-profile";
 
 export const router = createBrowserRouter([
   {
@@ -17,6 +19,8 @@ export const router = createBrowserRouter([
     element: <MainLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: "search", element: <SearchPage /> },
+      { path: "profiles/:username", element: <PublicProfilePage /> },
       {
         element: <GuestRoute />,
         children: [

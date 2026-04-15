@@ -46,7 +46,7 @@ export default function UserMenu() {
             <img
                 src={user.avatar}
                 alt={user.username}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover cursor-pointer"
             />
             ) : (
             getInitial(user?.username)

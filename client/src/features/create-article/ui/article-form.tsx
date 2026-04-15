@@ -1,111 +1,488 @@
-import {type ArticleFormValues, articleSchema} from "@/shared/schemas/article-schema.ts";
-import {useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
-import Input from "@/shared/ui/input.tsx";
-import Button from "@/shared/ui/button.tsx";
-import ImageUploadField from "@/features/upload-image/ui/image-upload-field.tsx";
-import {useEffect} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Input from "@/shared/ui/input";
+import Button from "@/shared/ui/button";
+import ImageUploadField from "@/features/upload-image/ui/image-upload-field";
+import MarkdownToolbar from "@/features/markdown-editor/ui/markdown-toolbar";
+import MarkdownPreview from "@/features/markdown-editor/ui/markdown-preview";
+import { uploadImageRequest } from "@/entities/upload/api/upload-api";
+import {
+  articleSchema,
+  type ArticleFormValues,
+} from "@/shared/schemas/article-schema";
+import {
+  loadDraft,
+  saveDraft,
+  clearDraft,
+  formatDraftTime,
+  type DraftData,
+} from "@/features/create-article/lib/draft";
 
 type ArticleFormProps = {
-    defaultValues?: Partial<ArticleFormValues>;
-    submitText?: string;
-    loading?: boolean;
-    onSubmit: (values: ArticleFormValues) => Promise<void> | void;
+  defaultValues?: Partial<ArticleFormValues>;
+  submitText: string;
+  loading?: boolean;
+  draftKey?: string;
+  onSubmit: (values: ArticleFormValues) => Promise<void> | void;
 };
 
+type EditorTab = "edit" | "preview";
+
+function normalizeTagText(value?: string) {
+  return value ?? "";
+}
+
 export default function ArticleForm({
-    defaultValues,
-    submitText,
-    loading = false,
-    onSubmit,
-}:ArticleFormProps) {
-    const {
-        register,
-        handleSubmit,
-        setValue,
-        watch,
-        reset,
-        formState: { errors, isSubmitting },
-    } = useForm<ArticleFormValues>({
-        resolver: zodResolver(articleSchema),
-        defaultValues : {
-            title: defaultValues?.title ?? "",
-            summary: defaultValues?.summary ?? "",
-            content: defaultValues?.content ?? "",
-            coverImage: defaultValues?. coverImage ?? "",
-            tags: defaultValues?.tags ?? "",
-        },
+  defaultValues,
+  submitText,
+  loading = false,
+  draftKey,
+  onSubmit,
+}: ArticleFormProps) {
+  const [tab, setTab] = useState<EditorTab>("edit");
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Draft state
+  const [draftBanner, setDraftBanner] = useState<DraftData | null>(null);
+  const [draftStatus, setDraftStatus] = useState<string>("");
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Image insertion state
+  const [imageInputOpen, setImageInputOpen] = useState(false);
+  const [imageAlt, setImageAlt] = useState("");
+  const [imageUploading, setImageUploading] = useState(false);
+  const imageCursorRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
+  const imageFileRef = useRef<HTMLInputElement | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    getValues,
+    formState: { errors, isSubmitting },
+  } = useForm<ArticleFormValues>({
+    resolver: zodResolver(articleSchema),
+    defaultValues: {
+      title: defaultValues?.title ?? "",
+      summary: defaultValues?.summary ?? "",
+      content: defaultValues?.content ?? "",
+      coverImage: defaultValues?.coverImage ?? "",
+      tags: normalizeTagText(defaultValues?.tags),
+    },
+  });
+
+  useEffect(() => {
+    reset({
+      title: defaultValues?.title ?? "",
+      summary: defaultValues?.summary ?? "",
+      content: defaultValues?.content ?? "",
+      coverImage: defaultValues?.coverImage ?? "",
+      tags: normalizeTagText(defaultValues?.tags),
+    });
+  }, [defaultValues, reset]);
+
+  // Check for saved draft on mount
+  useEffect(() => {
+    if (!draftKey) return;
+    const draft = loadDraft(draftKey);
+    if (!draft) return;
+
+    const dv = defaultValues ?? {};
+    const draftVals = draft.values;
+    const hasContent =
+      draftVals.title || draftVals.summary || draftVals.content;
+    const isDifferent =
+      draftVals.title !== (dv.title ?? "") ||
+      draftVals.summary !== (dv.summary ?? "") ||
+      draftVals.content !== (dv.content ?? "");
+
+    if (hasContent && isDifferent) {
+      setDraftBanner(draft);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey]);
+
+  const { ref: contentRef, ...contentRegister } = register("content");
+
+  const title = watch("title");
+  const summary = watch("summary");
+  const content = watch("content");
+  const coverImage = watch("coverImage");
+  const tags = watch("tags");
+
+  // Debounced auto-save
+  useEffect(() => {
+    if (!draftKey) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      const vals = { title, summary, content, coverImage, tags };
+      saveDraft(draftKey, vals);
+      setDraftStatus(`Draft saved at ${formatDraftTime(new Date().toISOString())}`);
+    }, 1500);
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, [title, summary, content, coverImage, tags, draftKey]);
+
+  const handleRestoreDraft = () => {
+    if (!draftBanner) return;
+    const v = draftBanner.values;
+    reset({
+      title: v.title ?? "",
+      summary: v.summary ?? "",
+      content: v.content ?? "",
+      coverImage: v.coverImage ?? "",
+      tags: normalizeTagText(v.tags),
+    });
+    setDraftBanner(null);
+  };
+
+  const handleDiscardDraft = () => {
+    if (draftKey) clearDraft(draftKey);
+    setDraftBanner(null);
+  };
+
+  const previewMarkdown = useMemo(() => {
+    const tagLine = tags
+      ? tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+          .map((tag) => `#${tag}`)
+          .join(" ")
+      : "";
+
+    return [
+      title ? `# ${title}` : "# New post title here...",
+      summary ? `> ${summary}` : "",
+      tagLine,
+      content || "Write your post content here...",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  }, [title, summary, tags, content]);
+
+  const applyMarkdown = (action: string) => {
+    const textarea = textareaRef.current;
+
+    if (action === "image") {
+      const start = textarea?.selectionStart ?? 0;
+      const end = textarea?.selectionEnd ?? 0;
+      const selected = textarea ? textarea.value.slice(start, end) : "";
+      imageCursorRef.current = { start, end };
+      setImageAlt(selected || "");
+      setImageInputOpen(true);
+      return;
+    }
+
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const current = textarea.value;
+    const selected = current.slice(start, end);
+    const before = current.slice(0, start);
+    const after = current.slice(end);
+
+    const insert = (nextText: string, cursorOffset?: number) => {
+      const value = before + nextText + after;
+      setValue("content", value, { shouldValidate: true, shouldDirty: true });
+
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const pos =
+          cursorOffset !== undefined ? start + cursorOffset : start + nextText.length;
+        textarea.setSelectionRange(pos, pos);
+      });
+    };
+
+    switch (action) {
+      case "bold": {
+        const text = `**${selected || "bold text"}**`;
+        insert(text, selected ? text.length : 2);
+        break;
+      }
+      case "italic": {
+        const text = `*${selected || "italic text"}*`;
+        insert(text, selected ? text.length : 1);
+        break;
+      }
+      case "link": {
+        const label = selected || "link text";
+        const text = `[${label}](https://example.com)`;
+        insert(text);
+        break;
+      }
+      case "h2": {
+        const text = `## ${selected || "Heading"}`;
+        insert(text);
+        break;
+      }
+      case "quote": {
+        const text = `> ${selected || "Quote"}`;
+        insert(text);
+        break;
+      }
+      case "code": {
+        const text = selected
+          ? `\`\`\`\n${selected}\n\`\`\``
+          : "```js\nconst example = true;\n```";
+        insert(text);
+        break;
+      }
+      case "ul": {
+        const text = selected
+          ? selected
+              .split("\n")
+              .map((line) => `- ${line}`)
+              .join("\n")
+          : "- List item";
+        insert(text);
+        break;
+      }
+      case "ol": {
+        const text = selected
+          ? selected
+              .split("\n")
+              .map((line, index) => `${index + 1}. ${line}`)
+              .join("\n")
+          : "1. List item";
+        insert(text);
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
+  const insertImageMarkdown = (url: string, alt: string) => {
+    const textarea = textareaRef.current;
+    const { start, end } = imageCursorRef.current;
+    const current = getValues("content");
+    const before = current.slice(0, start);
+    const after = current.slice(end);
+    const mdImage = `![${alt || "image"}](${url})`;
+    setValue("content", before + mdImage + after, { shouldValidate: true, shouldDirty: true });
+
+    requestAnimationFrame(() => {
+      if (textarea) {
+        textarea.focus();
+        const pos = start + mdImage.length;
+        textarea.setSelectionRange(pos, pos);
+      }
     });
 
-    useEffect(() => {
-       reset({
-        title: defaultValues?.title ?? "",
-        summary: defaultValues?.summary ?? "",
-        content: defaultValues?.content ?? "",
-        coverImage: defaultValues?.coverImage ?? "",
-        tags: defaultValues?.tags ?? "",
-      });
-    }, [defaultValues, reset]);
+    setImageInputOpen(false);
+    setImageAlt("");
+  };
 
-    const coverImage = watch("coverImage");
+  const handleUploadImageFile = async (file: File | null) => {
+    if (!file) return;
+    try {
+      setImageUploading(true);
+      const response = await uploadImageRequest(file);
+      insertImageMarkdown(response.data.url, imageAlt.trim() || file.name.replace(/\.[^.]+$/, ""));
+    } catch {
+      window.alert("Image upload failed. Please try again.");
+    } finally {
+      setImageUploading(false);
+      if (imageFileRef.current) imageFileRef.current.value = "";
+    }
+  };
 
-    return (
-        <form
-          onSubmit={handleSubmit(async (values) => {
-              await onSubmit(values);
-          })}
-          className="space-y-4"
-        >
-            <Input
-              label="Title"
-              placeholder="Enter article title"
-              error={errors.title?.message}
-              {...register("title")}
+  return (
+    <form
+      onSubmit={handleSubmit(async (values) => {
+        await onSubmit(values);
+      })}
+      className="space-y-6"
+    >
+      {/* Draft restore banner */}
+      {draftBanner ? (
+        <div className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800">
+          <span>
+            You have an unsaved draft from{" "}
+            <strong>{formatDraftTime(draftBanner.savedAt)}</strong>. Restore it?
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleRestoreDraft}
+              className="rounded-lg bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700"
+            >
+              Restore
+            </button>
+            <button
+              type="button"
+              onClick={handleDiscardDraft}
+              className="rounded-lg border border-amber-300 px-3 py-1 text-xs font-medium hover:bg-amber-100"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="rounded-3xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-gray-200 px-6 py-5 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <ImageUploadField
+              label="Add a cover image"
+              layout="horizontal"
+              value={coverImage ?? ""}
+              onUploaded={(url) =>
+                setValue("coverImage", url, { shouldValidate: true })
+              }
             />
 
-            <Input
-              label="Summary"
-              placeholder="Write a short summary"
-              error={errors.summary?.message}
+            <div className="hidden">
+              <Input
+                label="Cover Image URL"
+                placeholder="https://example.com/cover.jpg"
+                error={errors.coverImage?.message}
+                {...register("coverImage")}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setTab("edit")}
+              className={`text-base font-medium cursor-pointer ${
+                tab === "edit" ? "text-gray-900" : "text-gray-500"
+              }`}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("preview")}
+              className={`text-base font-medium cursor-pointer ${
+                tab === "preview" ? "text-gray-900" : "text-gray-500"
+              }`}
+            >
+              Preview
+            </button>
+          </div>
+        </div>
+
+        <div className="px-6 pt-8">
+          <input
+            type="text"
+            placeholder="New post title here..."
+            className="w-full border-none bg-transparent text-6xl font-bold leading-tight text-gray-700 outline-none placeholder:text-gray-400"
+            {...register("title")}
+          />
+          {errors.title?.message ? (
+            <p className="mt-2 text-sm text-red-500">{errors.title.message}</p>
+          ) : null}
+
+          <div className="mt-4">
+            <input
+              type="text"
+              placeholder="Write a short summary..."
+              className="w-full border-none bg-transparent text-2xl leading-relaxed text-gray-600 outline-none placeholder:text-gray-400"
               {...register("summary")}
             />
+            {errors.summary?.message ? (
+              <p className="mt-2 text-sm text-red-500">{errors.summary.message}</p>
+            ) : null}
+          </div>
 
-            <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700">Content</label>
-                <textarea
-                   rows={10}
-                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
-                   placeholder="Write your article content"
-                   {...register("content")}
+          <div className="mt-5">
+            <input
+              type="text"
+              placeholder="Add tags, separated by commas..."
+              className="w-full border-none bg-transparent text-lg text-gray-500 outline-none placeholder:text-gray-400"
+              {...register("tags")}
+            />
+            {errors.tags?.message ? (
+              <p className="mt-2 text-sm text-red-500">{errors.tags.message}</p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <MarkdownToolbar onAction={applyMarkdown} />
+
+          {/* Image insert panel */}
+          {imageInputOpen ? (
+            <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-medium text-gray-500">Insert image</span>
+                <input
+                  ref={imageFileRef}
+                  type="file"
+                  accept="image/*"
+                  disabled={imageUploading}
+                  onChange={(e) => handleUploadImageFile(e.target.files?.[0] ?? null)}
+                  className="flex-1 min-w-[200px] rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-600 file:mr-3 file:rounded file:border-0 file:bg-gray-100 file:px-2 file:py-1 file:text-xs file:font-medium file:text-gray-700 disabled:opacity-60"
                 />
-                {errors.content?.message && (
-                    <span className="text-sm text-red-500">{errors.content.message}</span>
-                )}
+                <input
+                  type="text"
+                  placeholder="Alt text (optional)"
+                  value={imageAlt}
+                  onChange={(e) => setImageAlt(e.target.value)}
+                  disabled={imageUploading}
+                  className="w-44 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-gray-400 disabled:opacity-60"
+                />
+                {imageUploading ? (
+                  <span className="text-xs text-gray-400">Uploading...</span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setImageInputOpen(false)}
+                  className="rounded-md px-2 py-1 text-xs text-gray-400 hover:bg-gray-200"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
+          ) : null}
 
-            <Input
-               label="Cover Image URL"
-               placeholder="Enter cover image URL"
-               error={errors.coverImage?.message}
-               {...register("coverImage")}
-            />
+          {tab === "edit" ? (
+            <div className="min-h-[420px] rounded-b-3xl bg-white px-6 py-6">
+              <textarea
+                rows={18}
+                placeholder="Write your post content here..."
+                className="h-[420px] w-full resize-none border-none bg-transparent font-mono text-3xl leading-10 text-gray-700 outline-none placeholder:text-gray-400"
+                ref={(el) => {
+                  contentRef(el);
+                  textareaRef.current = el;
+                }}
+                {...contentRegister}
+              />
+              {errors.content?.message ? (
+                <p className="mt-2 text-sm text-red-500">{errors.content.message}</p>
+              ) : null}
+            </div>
+          ) : (
+            <MarkdownPreview content={previewMarkdown} />
+          )}
+        </div>
+      </div>
 
-            <ImageUploadField
-              label = "Or upload a cover image"
-              value={coverImage ?? ""}
-              onUploaded={(url) => setValue("coverImage", url, {shouldValidate: true})}
-            />
+      <div className="flex flex-wrap items-center gap-4">
+        <Button type="submit" loading={loading || isSubmitting}>
+          {submitText}
+        </Button>
 
-            <Input
-               label="Tags"
-               placeholder="React, TypeScript"
-               error={errors.tags?.message}
-               {...register("tags")}
-            />
+        <button
+          type="button"
+          onClick={() => reset()}
+          className="text-lg text-gray-700 transition hover:text-gray-900"
+        >
+          Reset changes
+        </button>
 
-            <Button type="submit" fullWidth loading={loading || isSubmitting }>
-                {submitText}
-            </Button>
-        </form>
-    );
+        {draftStatus ? (
+          <span className="ml-auto text-sm text-gray-400">{draftStatus}</span>
+        ) : null}
+      </div>
+    </form>
+  );
 }

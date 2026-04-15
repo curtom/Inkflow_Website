@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {authMiddleware} from "../../common/middlewares/auth.middleware";
+import {authMiddleware, optionalAuthMiddleware} from "../../common/middlewares/auth.middleware";
 import {
     createArticleController, deleteArticleController,
     getArticleBySlugController,
@@ -14,8 +14,8 @@ import reactionRouter from "../reactions/reaction.route";
 const articleRouter = Router();
 
 articleRouter.post("/", authMiddleware, validate(createArticleSchema), createArticleController );
-articleRouter.get("/", validate(getArticleSchema), getArticlesController);
-articleRouter.get("/:slug", validate(getArticleBySlugSchema), getArticleBySlugController);
+articleRouter.get("/", optionalAuthMiddleware, validate(getArticleSchema), getArticlesController);
+articleRouter.get("/:slug", optionalAuthMiddleware, validate(getArticleBySlugSchema), getArticleBySlugController);
 articleRouter.patch(
     "/:slug",
     authMiddleware,

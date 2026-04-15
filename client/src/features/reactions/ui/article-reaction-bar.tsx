@@ -1,13 +1,15 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAppSelector } from "@/shared/hooks/redux";
 import { toggleFavoriteArticleRequest, toggleLikeArticleRequest } from "@/features/reactions/api/reaction-api";
-
+import { Heart, MessageCircle, Bookmark } from 'lucide-react';
 
 type Props = {
     slug: string;
     likesCount: number;
     commentsCount: number;
     favoritesCount: number;
+    isLiked?: boolean;
+    isFavorited?: boolean;
 };
 
 export default function ArticleReactionBar({
@@ -15,6 +17,8 @@ export default function ArticleReactionBar({
    likesCount,
    commentsCount,
    favoritesCount,
+   isLiked = false,
+   isFavorited = false,
 }: Props) {
    const queryClient = useQueryClient();
    const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
@@ -23,6 +27,7 @@ export default function ArticleReactionBar({
       Promise.all([
          queryClient.invalidateQueries({ queryKey: ["articles"] }),
          queryClient.invalidateQueries({ queryKey: ["profile"] }),
+         queryClient.invalidateQueries({ queryKey: ["public-profile"] }),
       ]);
 
    const likeMutation = useMutation({
@@ -49,14 +54,18 @@ export default function ArticleReactionBar({
               }
               await likeMutation.mutateAsync();
            }}
-           className="inline-flex items-center gap-1 transition hover:text-gray-800 disabled:opacity-60"
+           className="inline-flex items-center gap-1 transition hover:text-gray-800 disabled:opacity-60 cursor-pointer"
          >
-            <span>♡</span>
+            <Heart
+              className="w-5 h-5 transition-colors"
+              fill={isLiked ? "currentColor" : "none"}
+              strokeWidth={isLiked ? 0 : 2}
+            />
             <span>{likesCount}</span>
          </button>
 
          <span className="inline-flex items-center gap-1">
-            <span>💬</span>
+            <MessageCircle className="w-5 h-5" />
             <span>{commentsCount}</span>
          </span>
 
@@ -72,9 +81,13 @@ export default function ArticleReactionBar({
             }
             await favoriteMutation.mutateAsync();
           }}
-          className="inline-flex items-center gap-1 transition hover:text-gray-800 disabled:opacity-60"
+          className="inline-flex items-center gap-1 transition hover:text-gray-800 disabled:opacity-60 cursor-pointer"
         >
-            <span>🔖</span>
+            <Bookmark
+              className="w-5 h-5 transition-colors"
+              fill={isFavorited ? "currentColor" : "none"}
+              strokeWidth={isFavorited ? 0 : 2}
+            />
             <span>{favoritesCount}</span>
         </button>
       </div>

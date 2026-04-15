@@ -30,6 +30,8 @@ type ArticleDocumentLike = {
     coverImage?: string;
     tags: string[];
     author: ArticleAuthor;
+    likedBy: unknown[];
+    favoritedBy: unknown[];
     likesCount: number;
     favoritesCount: number;
     commentsCount: number;
@@ -37,7 +39,7 @@ type ArticleDocumentLike = {
     updatedAt: Date;
 };
 
-function sanitizeArticle(article: ArticleDocumentLike) {
+function sanitizeArticle(article: ArticleDocumentLike, userId?: string) {
     return {
         id: String(article._id),
         title: article.title,
@@ -50,6 +52,12 @@ function sanitizeArticle(article: ArticleDocumentLike) {
         likesCount: article.likesCount ?? 0,
         favoritesCount: article.favoritesCount ?? 0,
         commentsCount: article.commentsCount ?? 0,
+        isLiked: userId
+            ? (article.likedBy ?? []).some((id) => String(id) === userId)
+            : false,
+        isFavorited: userId
+            ? (article.favoritedBy ?? []).some((id) => String(id) === userId)
+            : false,
         createdAt: article.createdAt,
         updatedAt: article.updatedAt,
     };
@@ -106,13 +114,15 @@ export async function createArticle(userId: string, payload: CreateArticleInput)
     }
 
     return {
-        article: sanitizeArticle(populatedArticle as unknown as ArticleDocumentLike),
+        article: sanitizeArticle(populatedArticle as unknown as ArticleDocumentLike, userId),
     };
 }
 
 type GetArticlesInput = {
     page?: number;
     limit?: number;
+    tag?: string;
+    userId?: string;
 };
 
 export async function getArticles(query: GetArticlesInput) {
@@ -120,18 +130,24 @@ export async function getArticles(query: GetArticlesInput) {
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
+    const filter: Record<string, unknown> = {};
+
+    if (query.tag) {
+        filter.tags = query.tag;
+    }
+
     const [articles, total] = await Promise.all([
-        Article.find()
+        Article.find(filter)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
             .populate("author", "username email bio avatar"),
-        Article.countDocuments(),
+        Article.countDocuments(filter),
     ]);
 
     return {
         articles: articles.map((article) =>
-            sanitizeArticle(article as unknown as ArticleDocumentLike)
+            sanitizeArticle(article as unknown as ArticleDocumentLike, query.userId)
         ),
         pagination: {
             page,
@@ -142,7 +158,7 @@ export async function getArticles(query: GetArticlesInput) {
     };
 }
 
-export async function getArticleBySlug(slug: string) {
+export async function getArticleBySlug(slug: string, userId?: string) {
     const article = await Article.findOne({ slug }).populate(
         "author",
         "username email bio avatar"
@@ -153,7 +169,7 @@ export async function getArticleBySlug(slug: string) {
     }
 
     return {
-        article: sanitizeArticle(article as unknown as ArticleDocumentLike),
+        article: sanitizeArticle(article as unknown as ArticleDocumentLike, userId),
     };
 }
 
@@ -215,7 +231,7 @@ export async function updateArticle(
     }
 
     return {
-        article: sanitizeArticle(updatedArticle as unknown as ArticleDocumentLike),
+        article: sanitizeArticle(updatedArticle as unknown as ArticleDocumentLike, userId),
     };
 }
 

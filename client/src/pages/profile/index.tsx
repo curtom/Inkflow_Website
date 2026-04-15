@@ -66,7 +66,7 @@ export default function ProfilePage() {
                     type="button"
                     onClick={() => setTab("published")}
                     className={cn(
-                    "rounded-full px-4 py-2 text-sm font-medium transition",
+                    "rounded-full px-4 py-2 text-sm font-medium transition cursor-pointer",
                     tab === "published"
                         ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -79,7 +79,7 @@ export default function ProfilePage() {
                     type="button"
                     onClick={() => setTab("favorites")}
                     className={cn(
-                    "rounded-full px-4 py-2 text-sm font-medium transition",
+                    "rounded-full px-4 py-2 text-sm font-medium transition cursor-pointer",
                     tab === "favorites"
                         ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"

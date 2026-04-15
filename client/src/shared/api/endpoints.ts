@@ -19,6 +19,10 @@ export const ENDPOINTS = {
         update: (slug: string) => `/articles/${slug}`,
         delete: (slug: string) => `/articles/${slug}`,
     },
+    publicProfile: {
+      detail: (username: string) => `/profiles/${username}`,
+      articles: (username: string) => `/profiles/${username}/articles`,
+    },
     comments: {
         list: (slug: string) => `/articles/${slug}/comments`,
         create: (slug: string) => `/articles/${slug}/comments`,
@@ -32,4 +36,7 @@ export const ENDPOINTS = {
       uploads: {
         image: "/uploads/image",
       },
+      search: {
+        overview: "/search",
+      }
 };

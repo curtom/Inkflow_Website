@@ -1,13 +1,26 @@
-import { Link } from "react-router";
+import { type FormEvent, useState } from "react";
+import { Link, useNavigate } from "react-router";
 import { useAppSelector } from "@/shared/hooks/redux";
 import UserMenu from "@/widgets/user-menu";
+import { Search, SquarePen } from 'lucide-react';
 
 type NavbarProps = {
   onToggleSidebar: () => void;
 };
 
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const [searchValue, setSearchValue] = useState("");
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const keyword = searchValue.trim();
+
+    if(!keyword) return;
+
+    navigate(`/search?q=${encodeURIComponent(keyword)}&tab=stories`);
+  }
 
   return (
     <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 backdrop-blur">
@@ -24,6 +37,19 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           <Link to="/" className="text-3xl font-bold tracking-tight text-gray-900">
             InkFlow
           </Link>
+
+          <form onSubmit={handleSubmit} className="hidden md:block">
+            <div className="flex w-80 items-center rounded-full bg-gray-100 px-4 py-2">
+              <Search className="w-5 h-5 text-gray-400" />
+              <input 
+                 type="text"
+                 value={searchValue}
+                 onChange={(e) => setSearchValue(e.target.value)}
+                 placeholder="Search..."
+                 className="w-full bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
+               />
+            </div>
+          </form>
         </div>
 
         <div className="flex items-center gap-4">
@@ -31,8 +57,9 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             <>
               <Link
                 to="/editor"
-                className="hidden rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 md:inline-flex"
+                className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 md:inline-flex"
               >
+                <SquarePen className="w-5 h-5" />
                 Write
               </Link>
               <UserMenu />
