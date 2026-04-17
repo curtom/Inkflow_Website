@@ -22,6 +22,7 @@ export const ENDPOINTS = {
     publicProfile: {
       detail: (username: string) => `/profiles/${username}`,
       articles: (username: string) => `/profiles/${username}/articles`,
+      follow: (username: string) => `/profiles/${username}/follow`,
     },
     comments: {
         list: (slug: string) => `/articles/${slug}/comments`,
@@ -38,5 +39,10 @@ export const ENDPOINTS = {
       },
       search: {
         overview: "/search",
-      }
+      },
+      dashboard: {
+        overview: "/dashboard/overview",
+        social: "/dashboard/social",
+        history: "/dashboard/history",
+      },
 };

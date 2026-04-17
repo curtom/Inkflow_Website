@@ -12,6 +12,7 @@ import ProfilePage from "@/pages/profile";
 import { GuestRoute, ProtectedRoute } from "./route-guards";
 import SearchPage from "@/pages/search";
 import PublicProfilePage from "@/pages/public-profile";
+import DashboardPage from "@/pages/dashboard";
 
 export const router = createBrowserRouter([
   {
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
           { path: "editor/:slug", element: <EditArticlePage /> },
           { path: "settings", element: <SettingsPage /> },
           { path: "profile", element: <ProfilePage /> },
+          { path: "dashboard", element: <DashboardPage /> },
         ],
       },
     ],

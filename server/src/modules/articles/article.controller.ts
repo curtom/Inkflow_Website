@@ -3,6 +3,20 @@ import {AppError} from "../../common/utils/app-error";
 import {createArticle, deleteArticle, getArticleBySlug, getArticles, updateArticle} from "./article.service";
 import {successResponse} from "../../common/utils/api-response";
 
+function getViewerFingerprint(req: Request, userId?: string) {
+    if (userId) {
+        return `user:${userId}`;
+    }
+
+    const forwardedFor = req.headers["x-forwarded-for"];
+    const forwardedIp = Array.isArray(forwardedFor)
+        ? forwardedFor[0]
+        : forwardedFor?.split(",")[0]?.trim();
+    const ip = forwardedIp || req.ip || "unknown";
+
+    return `ip:${ip}`;
+}
+
 export async function createArticleController(
     req: Request,
     res: Response,
@@ -47,7 +61,8 @@ export async function getArticleBySlugController(
     try {
        const { slug } = req.params;
        const userId = req.user?.userId;
-       const result = await getArticleBySlug(slug as string, userId);
+       const viewerFingerprint = getViewerFingerprint(req, userId);
+       const result = await getArticleBySlug(slug as string, userId, viewerFingerprint);
 
        res.status(200).json(successResponse("Article fetched successfully", result));
     }catch (error) {

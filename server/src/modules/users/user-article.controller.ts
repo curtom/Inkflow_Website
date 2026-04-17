@@ -23,6 +23,7 @@ function formatArticle(article: any) {
     likesCount: article.likesCount ?? 0,
     favoritesCount: article.favoritesCount ?? 0,
     commentsCount: article.commentsCount ?? 0,
+    viewsCount: article.viewsCount ?? 0,
     createdAt: article.createdAt,
     updatedAt: article.updatedAt,
   };
