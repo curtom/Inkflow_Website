@@ -12,6 +12,9 @@ type PublicProfileResponse = {
             email: string;
             bio?: string;
             avatar?: string;
+            followersCount: number;
+            followingCount: number;
+            isFollowing: boolean;
         };
     };
 };
@@ -25,6 +28,9 @@ type PublicProfileArticlesResponse = {
             email: string;
             bio?: string;
             avatar?: string;
+            followersCount: number;
+            followingCount: number;
+            isFollowing: boolean;
         };
         articles: Article[];
         pagination: {
@@ -46,4 +52,12 @@ export async function getPublicProfileArticlesRequest(
     limit = 10
 ) {
     return (await api.get(ENDPOINTS.publicProfile.articles(username), {params: {page, limit}})) as unknown as PublicProfileArticlesResponse;
+}
+
+export async function followUserRequest(username: string) {
+    return (await api.post(ENDPOINTS.publicProfile.follow(username))) as unknown as PublicProfileResponse;
+}
+
+export async function unfollowUserRequest(username: string) {
+    return (await api.delete(ENDPOINTS.publicProfile.follow(username))) as unknown as PublicProfileResponse;
 }

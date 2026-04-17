@@ -1,17 +1,23 @@
 import { useSearchParams, useParams } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  followUserRequest,
   getPublicProfileArticlesRequest,
   getPublicProfileRequest,
+  unfollowUserRequest,
 } from "@/features/profile/api/public-profile-api";
 import { queryKeys } from "@/shared/api/query-keys";
 import ArticleList from "@/widgets/article-list";
 import Button from "@/shared/ui/button";
+import { useAppSelector } from "@/shared/hooks/redux";
 
 
 export default function PublicProfilePage() {
     const { username = ""} = useParams();
     const [searchParmas, setSearchParams] = useSearchParams();
+    const queryClient = useQueryClient();
+    const currentUser = useAppSelector((state) => state.auth.user);
+    const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
     const page = Number(searchParmas.get("page") || "1");
     const limit = 10;
@@ -28,9 +34,37 @@ export default function PublicProfilePage() {
         enabled: Boolean(username),
     });
 
+    const followMutation = useMutation({
+      mutationFn: () => followUserRequest(username),
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.publicProfile.detail(username),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.publicProfile.articles(username, page, limit),
+        });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.social });
+      },
+    });
+
+    const unfollowMutation = useMutation({
+      mutationFn: () => unfollowUserRequest(username),
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.publicProfile.detail(username),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.publicProfile.articles(username, page, limit),
+        });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.social });
+      },
+    });
+
     const user = profileQuery.data?.data.user;
     const articles = articlesQuery.data?.data.articles ?? [];
     const pagination = articlesQuery.data?.data.pagination;
+    const isSelf = currentUser?.username === username;
+    const isMutating = followMutation.isPending || unfollowMutation.isPending;
 
     if(profileQuery.isLoading || articlesQuery.isLoading) {
         return <div className="mx-auto max-w-5xl px-4 py-10">Loading profile...</div>
@@ -62,7 +96,32 @@ export default function PublicProfilePage() {
               <p className="mt-4 whitespace-pre-wrap text-gray-700">
                 {user.bio || "No bio yet."}
               </p>
+              <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                <span>{user.followersCount} Followers</span>
+                <span>{user.followingCount} Following</span>
+              </div>
             </div>
+            {!isSelf ? (
+              <Button
+                type="button"
+                disabled={!isAuthenticated || isMutating}
+                loading={isMutating}
+                onClick={async () => {
+                  if (!isAuthenticated) {
+                    window.alert("Please login to follow users.");
+                    return;
+                  }
+
+                  if (user.isFollowing) {
+                    await unfollowMutation.mutateAsync();
+                  } else {
+                    await followMutation.mutateAsync();
+                  }
+                }}
+              >
+                {user.isFollowing ? "Unfollow" : "Follow"}
+              </Button>
+            ) : null}
           </div>
         </section>
   

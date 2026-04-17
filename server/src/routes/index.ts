@@ -5,6 +5,7 @@ import articleRouter from "../modules/articles/article.route";
 import uploadRouter from "../modules/uploads/upload.route";
 import searchRouter from "../modules/search/search.route";
 import profileRouter from "../modules/profiles/profile.route";
+import dashboardRouter from "../modules/dashboard/dashboard.route";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/articles", articleRouter);
 router.use("/uploads", uploadRouter);
 router.use("/search", searchRouter);
 router.use("/profiles", profileRouter);
+router.use("/dashboard", dashboardRouter);
 
 export default router;

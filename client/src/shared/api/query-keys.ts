@@ -24,5 +24,10 @@ export const queryKeys = {
     },
     search: {
         overview: (keyword: string) => ["search", "overview", keyword] as const,
-    }
+    },
+    dashboard: {
+        overview: (month?: number) => ["dashboard", "overview", month ?? "current"] as const,
+        social: ["dashboard", "social"] as const,
+        history: (page: number, limit: number) => ["dashboard", "history", page, limit] as const,
+    },
 };

@@ -14,6 +14,7 @@ export interface IArticle extends Document {
     likesCount: number;
     favoritesCount: number;
     commentsCount: number;
+    viewsCount: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -75,6 +76,10 @@ const articleSchema = new Schema<IArticle>(
             default: 0,
           },
           commentsCount: {
+            type: Number,
+            default: 0,
+          },
+          viewsCount: {
             type: Number,
             default: 0,
           },

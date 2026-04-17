@@ -1,6 +1,7 @@
 import {Article} from "./article.model";
 import {generateSlug} from "../../common/utils/slug";
 import {AppError} from "../../common/utils/app-error";
+import { ArticleView } from "../views/article-view.model";
 
 
 type ArticleAuthor = {
@@ -35,6 +36,7 @@ type ArticleDocumentLike = {
     likesCount: number;
     favoritesCount: number;
     commentsCount: number;
+    viewsCount: number;
     createdAt: Date;
     updatedAt: Date;
 };
@@ -52,6 +54,7 @@ function sanitizeArticle(article: ArticleDocumentLike, userId?: string) {
         likesCount: article.likesCount ?? 0,
         favoritesCount: article.favoritesCount ?? 0,
         commentsCount: article.commentsCount ?? 0,
+        viewsCount: article.viewsCount ?? 0,
         isLiked: userId
             ? (article.likedBy ?? []).some((id) => String(id) === userId)
             : false,
@@ -77,9 +80,51 @@ async function ensureUniqueSlug(baseSlug: string, excludeArticleId?: string) {
             return slug;
         }
 
-        slug = `${baseSlug}-${counter};`
+        slug = `${baseSlug}-${counter}`;
         counter++;
     }
+}
+
+function createHourBucket(date: Date) {
+    const bucket = new Date(date);
+    bucket.setMinutes(0, 0, 0);
+    return bucket;
+}
+
+async function trackArticleView(
+    articleId: string,
+    articleAuthorId: string,
+    viewerFingerprint: string,
+    viewerUserId?: string
+) {
+    const now = new Date();
+    const hourBucket = createHourBucket(now);
+
+    const result = await ArticleView.updateOne(
+        {
+            article: articleId,
+            viewerFingerprint,
+            hourBucket,
+        },
+        {
+            $setOnInsert: {
+                article: articleId,
+                articleAuthor: articleAuthorId,
+                viewerUser: viewerUserId,
+                viewerFingerprint,
+                hourBucket,
+                viewedAt: now,
+            },
+        },
+        { upsert: true }
+    );
+
+    if (result.upsertedCount > 0) {
+        await Article.updateOne({ _id: articleId }, { $inc: { viewsCount: 1 } });
+        return true;
+    }
+
+    return false;
 }
 
 type CreateArticleInput = {
@@ -158,7 +203,11 @@ export async function getArticles(query: GetArticlesInput) {
     };
 }
 
-export async function getArticleBySlug(slug: string, userId?: string) {
+export async function getArticleBySlug(
+    slug: string,
+    userId?: string,
+    viewerFingerprint?: string
+) {
     const article = await Article.findOne({ slug }).populate(
         "author",
         "username email bio avatar"
@@ -166,6 +215,19 @@ export async function getArticleBySlug(slug: string, userId?: string) {
 
     if (!article) {
         throw new AppError("Article not found", 404);
+    }
+
+    if (viewerFingerprint) {
+        const didCount = await trackArticleView(
+            String(article._id),
+            String((article.author as unknown as ArticleAuthor)._id),
+            viewerFingerprint,
+            userId
+        );
+
+        if (didCount) {
+            article.viewsCount = (article.viewsCount ?? 0) + 1;
+        }
     }
 
     return {

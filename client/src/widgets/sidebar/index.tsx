@@ -1,6 +1,6 @@
 import { cn } from "@/shared/lib/cn";
 import { NavLink } from "react-router";
-import { House, Settings, User, SquarePen } from 'lucide-react';
+import { House, Settings, User, SquarePen, LayoutDashboard } from 'lucide-react';
 
 type SidebarProps = {
     open: boolean;
@@ -35,6 +35,11 @@ export default function Sidebar({ open }: SidebarProps) {
                 <NavLink to="/profile" className={linkClass}>
                     <User className="w-5 h-5" />
                     Profile
+                </NavLink>
+
+                <NavLink to="/dashboard" className={linkClass}>
+                    <LayoutDashboard className="w-5 h-5" />
+                    Dashboard
                 </NavLink>
 
                 <NavLink to="/editor" className={linkClass}>

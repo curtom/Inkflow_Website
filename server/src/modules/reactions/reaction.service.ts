@@ -1,5 +1,6 @@
 import { Article } from "../articles/article.model";
 import { AppError } from "../../common/utils/app-error";
+import { ReactionEvent } from "./reaction-event.model";
 
 
 function hasUser(list: unknown[], userId: string) {
@@ -20,8 +21,29 @@ export async function toggleLikeArticle(userId: string, slug: string) {
 
     if(alreadyLiked) {
         article.likedBy = article.likedBy.filter((id) => String(id) != userId);
+        await ReactionEvent.deleteOne({
+            article: article._id,
+            user: userId,
+            type: "like",
+        });
     }else {
         article.likedBy.push(userId as any);
+        await ReactionEvent.updateOne(
+            {
+                article: article._id,
+                user: userId,
+                type: "like",
+            },
+            {
+                $setOnInsert: {
+                    article: article._id,
+                    articleAuthor: article.author,
+                    user: userId,
+                    type: "like",
+                },
+            },
+            { upsert: true }
+        );
     }
 
     article.likesCount = article.likedBy.length;
@@ -47,8 +69,29 @@ export async function toggleFavoriteArticle(userId: string, slug: string) {
   
     if (alreadyFavorited) {
       article.favoritedBy = article.favoritedBy.filter((id) => String(id) !== userId);
+      await ReactionEvent.deleteOne({
+        article: article._id,
+        user: userId,
+        type: "favorite",
+      });
     } else {
       article.favoritedBy.push(userId as any);
+      await ReactionEvent.updateOne(
+        {
+          article: article._id,
+          user: userId,
+          type: "favorite",
+        },
+        {
+          $setOnInsert: {
+            article: article._id,
+            articleAuthor: article.author,
+            user: userId,
+            type: "favorite",
+          },
+        },
+        { upsert: true }
+      );
     }
   
     article.favoritesCount = article.favoritedBy.length;
