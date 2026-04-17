@@ -6,6 +6,10 @@ import {
   getDashboardOverviewRequest,
   getDashboardSocialRequest,
 } from "@/features/dashboard/api/dashboard-api";
+import {
+  followUserRequest,
+  unfollowUserRequest,
+} from "@/features/profile/api/public-profile-api";
 import { queryKeys } from "@/shared/api/query-keys";
 import { cn } from "@/shared/lib/cn";
 import Button from "@/shared/ui/button";
@@ -139,9 +143,6 @@ export default function DashboardPage() {
 
   const followMutation = useMutation({
     mutationFn: async (payload: { username: string; nextFollowing: boolean }) => {
-      const { followUserRequest, unfollowUserRequest } = await import(
-        "@/features/profile/api/public-profile-api"
-      );
       if (payload.nextFollowing) {
         return followUserRequest(payload.username);
       }
