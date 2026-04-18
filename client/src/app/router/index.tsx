@@ -13,6 +13,7 @@ import { GuestRoute, ProtectedRoute } from "./route-guards";
 import SearchPage from "@/pages/search";
 import PublicProfilePage from "@/pages/public-profile";
 import DashboardPage from "@/pages/dashboard";
+import CommunityPage from "@/pages/community";
 
 export const router = createBrowserRouter([
   {
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "search", element: <SearchPage /> },
+      { path: "communities/:communityId", element: <CommunityPage /> },
       { path: "profiles/:username", element: <PublicProfilePage /> },
       {
         element: <GuestRoute />,

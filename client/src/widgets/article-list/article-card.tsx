@@ -2,18 +2,23 @@ import { useNavigate } from "react-router"
 import type {Article} from "@/entities/article";
 import ArticleReactionBar from "@/features/reactions/ui/article-reaction-bar";
 import { HashIcon } from 'lucide-react';
+import { cn } from "@/shared/lib/cn";
 
 type Props = {
-    article: Article
+    article: Article;
+    compact?: boolean;
 };
 
-export default function ArticleCard({ article }: Props ) {
+export default function ArticleCard({ article, compact = false }: Props ) {
     const navigate = useNavigate();
 
     return (
         <div
             onClick={() => navigate(`/articles/${article.slug}`)}
-            className="block rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-green-300 hover:shadow-md cursor-pointer"
+            className={cn(
+                "block rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:border-green-300 hover:shadow-md cursor-pointer",
+                compact ? "p-4" : "p-5"
+            )}
         >
             <article>
                 <div className="flex items-center justify-between gap-4">
@@ -48,28 +53,37 @@ export default function ArticleCard({ article }: Props ) {
                                 {new Date(article.createdAt).toLocaleDateString()}
                             </span>
                         </div>
-                        <p className="mt-1 block text-xl font-semibold text-gray-900 group-hover:text-green-600">
+                        <p className={cn(
+                            "mt-1 block font-semibold text-gray-900 group-hover:text-green-600",
+                            compact ? "text-lg" : "text-xl"
+                        )}>
                             {article.title}
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-start gap-6 mt-4">
-                    <p className="text-gray-600 flex-1 min-w-0">
+                <div className={cn("flex items-start mt-4", compact ? "gap-4" : "gap-6")}>
+                    <p className={cn(
+                        "text-gray-600 flex-1 min-w-0",
+                        compact ? "max-h-[2.75rem] overflow-hidden text-sm leading-[1.375rem]" : ""
+                    )}>
                         {article.summary}
                     </p>
                     {article.coverImage && (
                         <img
                             src={article.coverImage}
                             alt={article.title}
-                            className="h-24 w-24 flex-shrink-0 rounded-xl object-cover"
+                            className={cn(
+                                "flex-shrink-0 rounded-xl object-cover",
+                                compact ? "h-16 w-16" : "h-24 w-24"
+                            )}
                         />
                     )}
                 </div>
 
                 {article.tags.length > 0 ? (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        {article.tags.map((tag) => (
+                    <div className={cn("mt-4 flex flex-wrap gap-2", compact ? "max-h-16 overflow-hidden" : "")}>
+                        {article.tags.slice(0, compact ? 3 : article.tags.length).map((tag) => (
                             <button
                                 key={tag}
                                 type="button"
@@ -78,9 +92,12 @@ export default function ArticleCard({ article }: Props ) {
                                     e.stopPropagation();
                                     navigate(`/?tag=${encodeURIComponent(tag)}`);
                                 }}
-                                className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600 transition hover:bg-gray-200 cursor-pointer flex items-center gap-1.5"
+                                className={cn(
+                                    "rounded-full bg-gray-100 text-gray-600 transition hover:bg-gray-200 cursor-pointer flex items-center gap-1.5",
+                                    compact ? "px-2.5 py-1 text-xs" : "px-3 py-1 text-sm"
+                                )}
                             >
-                                <HashIcon className="w-5 h-5" />
+                                <HashIcon className={compact ? "w-4 h-4" : "w-5 h-5"} />
                                 {tag}
                             </button>
                         ))}
