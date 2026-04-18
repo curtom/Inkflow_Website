@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   getDashboardHistoryRequest,
   getDashboardOverviewRequest,
@@ -13,112 +13,116 @@ import {
 import { queryKeys } from "@/shared/api/query-keys";
 import { cn } from "@/shared/lib/cn";
 import Button from "@/shared/ui/button";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 type DashboardTab = "analytics" | "social" | "history";
+type DashboardChartPoint = { day: number; label: string; viewsCount: number };
 
 function toMonthLabel(year: number, month: number) {
   return `${year}-${String(month).padStart(2, "0")}`;
 }
 
+function UserAvatar({
+  username,
+  avatar,
+}: {
+  username: string;
+  avatar?: string;
+}) {
+  return (
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-pink-500 text-sm font-semibold text-white">
+      {avatar ? (
+        <img
+          src={avatar}
+          alt={username}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        username.charAt(0).toUpperCase()
+      )}
+    </span>
+  );
+}
+
 function ViewsLineChart({
   data,
 }: {
-  data: Array<{ day: number; viewsCount: number }>;
+  data: DashboardChartPoint[];
 }) {
-  const width = 900;
-  const height = 260;
-  const paddingX = 36;
-  const paddingY = 24;
-  const maxY = Math.max(1, ...data.map((item) => item.viewsCount));
-  const chartWidth = width - paddingX * 2;
-  const chartHeight = height - paddingY * 2;
-
-  const points = data.map((item, index) => {
-    const x =
-      data.length <= 1
-        ? paddingX
-        : paddingX + (index / (data.length - 1)) * chartWidth;
-    const y = paddingY + chartHeight - (item.viewsCount / maxY) * chartHeight;
-    return `${x},${y}`;
-  });
-
-  const yTicks = Array.from({ length: 5 }, (_, index) => {
-    const ratio = index / 4;
-    const value = Math.round((1 - ratio) * maxY);
-    const y = paddingY + ratio * chartHeight;
-    return { value, y };
-  });
+  if (data.length === 0) {
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-500 shadow-sm">
+        No daily view data yet.
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-      <svg viewBox={`0 0 ${width} ${height}`} className="h-72 w-full">
-        {yTicks.map((tick) => (
-          <g key={tick.value}>
-            <line
-              x1={paddingX}
-              y1={tick.y}
-              x2={width - paddingX}
-              y2={tick.y}
-              stroke="#e5e7eb"
-              strokeWidth="1"
+      <div className="h-72 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={data}
+            margin={{ top: 12, right: 16, left: 6, bottom: 10 }}
+          >
+            <CartesianGrid strokeDasharray="4 4" stroke="#e5e7eb" vertical={false} />
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 12, fill: "#6b7280" }}
+              tickLine={false}
+              axisLine={{ stroke: "#e5e7eb" }}
+              minTickGap={16}
             />
-            <text
-              x={6}
-              y={tick.y + 4}
-              fontSize="11"
-              fill="#6b7280"
-              className="select-none"
-            >
-              {tick.value}
-            </text>
-          </g>
-        ))}
-
-        {points.length > 0 ? (
-          <polyline
-            points={points.join(" ")}
-            fill="none"
-            stroke="#16a34a"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        ) : null}
-
-        {data.map((item, index) => {
-          const x =
-            data.length <= 1
-              ? paddingX
-              : paddingX + (index / (data.length - 1)) * chartWidth;
-          const y = paddingY + chartHeight - (item.viewsCount / maxY) * chartHeight;
-          const showLabel = index === 0 || index === data.length - 1 || item.day % 5 === 0;
-          return (
-            <g key={item.day}>
-              <circle cx={x} cy={y} r={3} fill="#16a34a" />
-              {showLabel ? (
-                <text
-                  x={x}
-                  y={height - 4}
-                  textAnchor="middle"
-                  fontSize="10"
-                  fill="#6b7280"
-                  className="select-none"
-                >
-                  {item.day}
-                </text>
-              ) : null}
-            </g>
-          );
-        })}
-      </svg>
+            <YAxis
+              tick={{ fontSize: 12, fill: "#6b7280" }}
+              tickLine={false}
+              axisLine={{ stroke: "#e5e7eb" }}
+              allowDecimals={false}
+              width={38}
+            />
+            <Tooltip
+              cursor={{ stroke: "#86efac", strokeWidth: 2 }}
+              contentStyle={{
+                borderRadius: "0.75rem",
+                borderColor: "#d1d5db",
+                boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
+              }}
+              labelStyle={{ color: "#111827", fontWeight: 600 }}
+              formatter={(value) => {
+                const numericValue = Array.isArray(value) ? value[0] ?? 0 : value ?? 0;
+                return [`${numericValue} views`, "Views"];
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="viewsCount"
+              stroke="#16a34a"
+              strokeWidth={3}
+              dot={{ r: 3, stroke: "#16a34a", fill: "#ffffff", strokeWidth: 2 }}
+              activeDot={{ r: 6, stroke: "#16a34a", fill: "#ffffff", strokeWidth: 2 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const now = new Date();
+  const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
+  const currentDay = now.getDate();
   const [month, setMonth] = useState(currentMonth);
   const [tab, setTab] = useState<DashboardTab>("analytics");
   const [historyPage, setHistoryPage] = useState(1);
@@ -159,10 +163,10 @@ export default function DashboardPage() {
         const value = index + 1;
         return {
           value,
-          label: toMonthLabel(now.getFullYear(), value),
+          label: toMonthLabel(currentYear, value),
         };
       }),
-    [currentMonth, now]
+    [currentMonth, currentYear]
   );
 
   const renderAnalytics = () => {
@@ -174,6 +178,14 @@ export default function DashboardPage() {
     }
 
     const overview = overviewQuery.data.data;
+    const chartData = overview.dailyViews
+      .filter((item) => item.day <= Math.min(currentDay, overview.dailyViews.length))
+      .map((item) => ({
+        day: item.day,
+        viewsCount: item.viewsCount,
+        label: `${item.day}d`,
+      }));
+
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-3">
@@ -215,7 +227,7 @@ export default function DashboardPage() {
 
         <div>
           <h3 className="mb-3 text-lg font-semibold text-gray-900">Daily Views</h3>
-          <ViewsLineChart data={overview.dailyViews} />
+          <ViewsLineChart data={chartData} />
         </div>
       </div>
     );
@@ -243,9 +255,20 @@ export default function DashboardPage() {
                   key={item.user.id}
                   className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 p-3"
                 >
-                  <Link to={`/profiles/${item.user.username}`} className="min-w-0">
-                    <p className="font-medium text-gray-900 hover:text-green-600">{item.user.username}</p>
-                    <p className="truncate text-xs text-gray-500">{item.user.email}</p>
+                  <Link
+                    to={`/profiles/${item.user.username}`}
+                    className="flex min-w-0 items-center gap-3"
+                  >
+                    <UserAvatar
+                      username={item.user.username}
+                      avatar={item.user.avatar}
+                    />
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 hover:text-green-600">
+                        {item.user.username}
+                      </p>
+                      <p className="truncate text-xs text-gray-500">{item.user.email}</p>
+                    </div>
                   </Link>
                   <Button
                     type="button"
@@ -280,9 +303,20 @@ export default function DashboardPage() {
                   key={item.user.id}
                   className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 p-3"
                 >
-                  <Link to={`/profiles/${item.user.username}`} className="min-w-0">
-                    <p className="font-medium text-gray-900 hover:text-green-600">{item.user.username}</p>
-                    <p className="truncate text-xs text-gray-500">{item.user.email}</p>
+                  <Link
+                    to={`/profiles/${item.user.username}`}
+                    className="flex min-w-0 items-center gap-3"
+                  >
+                    <UserAvatar
+                      username={item.user.username}
+                      avatar={item.user.avatar}
+                    />
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 hover:text-green-600">
+                        {item.user.username}
+                      </p>
+                      <p className="truncate text-xs text-gray-500">{item.user.email}</p>
+                    </div>
                   </Link>
                 </div>
               ))
@@ -314,21 +348,30 @@ export default function DashboardPage() {
             {history.items.map((item) => (
               <div
                 key={item.article.id}
-                className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+                role="link"
+                tabIndex={0}
+                onClick={() => navigate(`/articles/${item.article.slug}`)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate(`/articles/${item.article.slug}`);
+                  }
+                }}
+                className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-green-300 hover:shadow-md"
               >
-                <Link
-                  to={`/articles/${item.article.slug}`}
-                  className="text-lg font-semibold text-gray-900 hover:text-green-600"
-                >
+                <p className="text-lg font-semibold text-gray-900 hover:text-green-600">
                   {item.article.title}
-                </Link>
+                </p>
                 <p className="mt-1 text-sm text-gray-500">
                   By{" "}
                   <Link
                     to={`/profiles/${item.article.author.username}`}
-                    className="font-medium text-gray-700 hover:text-green-600"
+                    onClick={(e) => e.stopPropagation()}
+                    className="group inline-flex font-medium text-gray-700 hover:text-gray-900"
                   >
-                    {item.article.author.username}
+                    <span className="border-b border-transparent transition-colors group-hover:border-black">
+                      {item.article.author.username}
+                    </span>
                   </Link>
                 </p>
                 <p className="mt-2 text-sm text-gray-600">{item.article.summary}</p>
