@@ -367,9 +367,11 @@ export default function DashboardPage() {
                   <Link
                     to={`/profiles/${item.article.author.username}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="font-medium text-gray-700 decoration-2 hover:text-gray-900 hover:underline hover:decoration-black"
+                    className="group inline-flex font-medium text-gray-700 hover:text-gray-900"
                   >
-                    {item.article.author.username}
+                    <span className="border-b border-transparent transition-colors group-hover:border-black">
+                      {item.article.author.username}
+                    </span>
                   </Link>
                 </p>
                 <p className="mt-2 text-sm text-gray-600">{item.article.summary}</p>
