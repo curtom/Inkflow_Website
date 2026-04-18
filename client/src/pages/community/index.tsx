@@ -6,26 +6,15 @@ import { queryKeys } from "@/shared/api/query-keys";
 import ArticleList from "@/widgets/article-list";
 import Button from "@/shared/ui/button";
 import {
-  getCommunityConfigByType,
-  type CommunityType,
+  COMMUNITY_CONFIG_MAP,
+  isCommunityId,
 } from "@/features/community/lib/community-config";
-
-const communityTypes: CommunityType[] = [
-  "language-learning",
-  "tool-sharing",
-  "daily-topic",
-  "video-sharing",
-];
-
-function isCommunityType(value: string): value is CommunityType {
-  return communityTypes.includes(value as CommunityType);
-}
 
 export default function CommunityPage() {
   const { communityId = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  if (!isCommunityType(communityId)) {
+  if (!isCommunityId(communityId)) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
         <p className="text-red-500">Community not found.</p>
@@ -33,15 +22,7 @@ export default function CommunityPage() {
     );
   }
 
-  const community = getCommunityConfigByType(communityId);
-
-  if (!community) {
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-red-500">Community not found.</p>
-      </div>
-    );
-  }
+  const community = COMMUNITY_CONFIG_MAP[communityId];
 
   const page = Number(searchParams.get("page") || "1");
   const groupKeyFromQuery = searchParams.get("group") || "";
