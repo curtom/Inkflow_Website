@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Redo2, Undo2 } from "lucide-react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Input from "@/shared/ui/input";
 import Button from "@/shared/ui/button";
@@ -11,6 +12,26 @@ import {
   articleSchema,
   type ArticleFormValues,
 } from "@/shared/schemas/article-schema";
+
+function cloneFormSnapshot(v: ArticleFormValues): ArticleFormValues {
+  return {
+    title: v.title,
+    summary: v.summary,
+    content: v.content,
+    coverImage: v.coverImage ?? "",
+    tags: v.tags ?? "",
+  };
+}
+
+function formSnapshotsEqual(a: ArticleFormValues, b: ArticleFormValues) {
+  return (
+    a.title === b.title &&
+    a.summary === b.summary &&
+    a.content === b.content &&
+    (a.coverImage ?? "") === (b.coverImage ?? "") &&
+    (a.tags ?? "") === (b.tags ?? "")
+  );
+}
 import {
   loadDraft,
   saveDraft,
@@ -75,6 +96,7 @@ export default function ArticleForm({
 
   const {
     register,
+    control,
     handleSubmit,
     setValue,
     watch,
@@ -92,7 +114,16 @@ export default function ArticleForm({
     },
   });
 
+  const historyWatchSerialized = JSON.stringify(useWatch({ control }) ?? {});
+
+  const isApplyingHistoryRef = useRef(false);
+  const lastSnapshotRef = useRef<ArticleFormValues | null>(null);
+  const pastRef = useRef<ArticleFormValues[]>([]);
+  const futureRef = useRef<ArticleFormValues[]>([]);
+  const [historyVersion, setHistoryVersion] = useState(0);
+
   useEffect(() => {
+    isApplyingHistoryRef.current = true;
     reset({
       title: defaultValues?.title ?? "",
       summary: defaultValues?.summary ?? "",
@@ -100,7 +131,75 @@ export default function ArticleForm({
       coverImage: defaultValues?.coverImage ?? "",
       tags: normalizeTagText(defaultValues?.tags),
     });
+    pastRef.current = [];
+    futureRef.current = [];
+    queueMicrotask(() => {
+      lastSnapshotRef.current = cloneFormSnapshot(getValues());
+      isApplyingHistoryRef.current = false;
+      setHistoryVersion((x) => x + 1);
+    });
   }, [defaultValues, reset]);
+
+  useEffect(() => {
+    if (isApplyingHistoryRef.current) {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      if (isApplyingHistoryRef.current) {
+        return;
+      }
+      const snap = cloneFormSnapshot(getValues());
+      if (lastSnapshotRef.current === null) {
+        lastSnapshotRef.current = snap;
+        return;
+      }
+      if (formSnapshotsEqual(lastSnapshotRef.current, snap)) {
+        return;
+      }
+      pastRef.current = [...pastRef.current, lastSnapshotRef.current];
+      futureRef.current = [];
+      lastSnapshotRef.current = snap;
+      setHistoryVersion((x) => x + 1);
+    }, 420);
+    return () => window.clearTimeout(timer);
+  }, [historyWatchSerialized]);
+
+  const canUndo = pastRef.current.length > 0;
+  const canRedo = futureRef.current.length > 0;
+
+  const undoEditStep = () => {
+    if (pastRef.current.length === 0) {
+      return;
+    }
+    isApplyingHistoryRef.current = true;
+    const prev = pastRef.current[pastRef.current.length - 1]!;
+    pastRef.current = pastRef.current.slice(0, -1);
+    const current = lastSnapshotRef.current!;
+    futureRef.current = [current, ...futureRef.current];
+    lastSnapshotRef.current = cloneFormSnapshot(prev);
+    reset(prev);
+    queueMicrotask(() => {
+      isApplyingHistoryRef.current = false;
+      setHistoryVersion((x) => x + 1);
+    });
+  };
+
+  const redoEditStep = () => {
+    if (futureRef.current.length === 0) {
+      return;
+    }
+    isApplyingHistoryRef.current = true;
+    const next = futureRef.current[0]!;
+    futureRef.current = futureRef.current.slice(1);
+    const current = lastSnapshotRef.current!;
+    pastRef.current = [...pastRef.current, current];
+    lastSnapshotRef.current = cloneFormSnapshot(next);
+    reset(next);
+    queueMicrotask(() => {
+      isApplyingHistoryRef.current = false;
+      setHistoryVersion((x) => x + 1);
+    });
+  };
 
   // Check for saved draft on mount
   useEffect(() => {
@@ -187,6 +286,7 @@ export default function ArticleForm({
   const handleRestoreDraft = () => {
     if (!draftBanner) return;
     const v = draftBanner.values;
+    isApplyingHistoryRef.current = true;
     reset({
       title: v.title ?? "",
       summary: v.summary ?? "",
@@ -195,6 +295,13 @@ export default function ArticleForm({
       tags: normalizeTagText(v.tags),
     });
     setDraftBanner(null);
+    queueMicrotask(() => {
+      pastRef.current = [];
+      futureRef.current = [];
+      lastSnapshotRef.current = cloneFormSnapshot(getValues());
+      isApplyingHistoryRef.current = false;
+      setHistoryVersion((x) => x + 1);
+    });
   };
 
   const handleDiscardDraft = () => {
@@ -536,17 +643,33 @@ export default function ArticleForm({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4">
+      <div
+        className="flex flex-wrap items-center gap-4"
+        data-edit-history={historyVersion}
+      >
         <Button type="submit" loading={loading || isSubmitting}>
           {submitText}
         </Button>
 
         <button
           type="button"
-          onClick={() => reset()}
-          className="text-lg text-gray-700 transition hover:text-gray-900"
+          onClick={undoEditStep}
+          disabled={!canUndo}
+          title="上一步"
+          aria-label="上一步"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-700 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-transparent"
         >
-          Reset changes
+          <Undo2 className="h-5 w-5" aria-hidden />
+        </button>
+        <button
+          type="button"
+          onClick={redoEditStep}
+          disabled={!canRedo}
+          title="下一步"
+          aria-label="下一步"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-700 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-transparent"
+        >
+          <Redo2 className="h-5 w-5" aria-hidden />
         </button>
 
         {draftStatus ? (

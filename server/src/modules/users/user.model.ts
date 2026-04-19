@@ -6,6 +6,7 @@ export interface IUser extends Document {
     password: string;
     bio?: string;
     avatar?: string;
+    notificationsLastViewedAt?: Date;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -38,6 +39,10 @@ const UserSchema = new Schema<IUser>(
         avatar: {
             type: String,
             default: "",
+        },
+        notificationsLastViewedAt: {
+            type: Date,
+            default: undefined,
         },
     },
     {

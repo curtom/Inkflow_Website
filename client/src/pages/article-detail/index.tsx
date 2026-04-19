@@ -225,10 +225,6 @@ export default function ArticleDetailPage() {
                             <DeleteArticleButton
                                 loading={deleteMutation.isPending}
                                 onDelete={async () => {
-                                    const confirmed = window.confirm(
-                                        "Are you sure you want to delete this article?"
-                                    );
-                                    if (!confirmed) return;
                                     await deleteMutation.mutateAsync();
                                 }}
                             />

@@ -178,8 +178,9 @@ export default function DashboardPage() {
     }
 
     const overview = overviewQuery.data.data;
+    const isViewingCurrentMonth = month === currentMonth;
     const chartData = overview.dailyViews
-      .filter((item) => item.day <= Math.min(currentDay, overview.dailyViews.length))
+      .filter((item) => (isViewingCurrentMonth ? item.day <= currentDay : true))
       .map((item) => ({
         day: item.day,
         viewsCount: item.viewsCount,

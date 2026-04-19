@@ -44,6 +44,9 @@ export const ENDPOINTS = {
         overview: "/dashboard/overview",
         social: "/dashboard/social",
         history: "/dashboard/history",
+        notifications: "/dashboard/notifications",
+        notificationsUnread: "/dashboard/notifications/unread",
+        notificationsMarkViewed: "/dashboard/notifications/mark-viewed",
       },
       community: {
         suggestTags: "/community/suggest-tags",

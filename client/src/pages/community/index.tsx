@@ -1,14 +1,12 @@
 import { useMemo } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
-import { useQuery } from "@tanstack/react-query";
-import { getArticlesRequest } from "@/entities/article/api/article-api";
-import { queryKeys } from "@/shared/api/query-keys";
-import ArticleList from "@/widgets/article-list";
-import Button from "@/shared/ui/button";
+import ArticleFeedInfinite from "@/widgets/article-feed-infinite";
 import {
   COMMUNITY_CONFIG_MAP,
   isCommunityId,
 } from "@/features/community/lib/community-config";
+
+const COMMUNITY_FEED_LIMIT = 12;
 
 export default function CommunityPage() {
   const { communityId = "" } = useParams();
@@ -16,24 +14,13 @@ export default function CommunityPage() {
   const isValidCommunity = isCommunityId(communityId);
   const community = isValidCommunity ? COMMUNITY_CONFIG_MAP[communityId] : null;
 
-  const page = Number(searchParams.get("page") || "1");
   const groupKeyFromQuery = searchParams.get("group") || "";
   const activeGroup =
     community?.tabs.some((tab) => tab.key === groupKeyFromQuery)
-    ? groupKeyFromQuery
-    : community?.tabs[0]?.key ?? "";
+      ? groupKeyFromQuery
+      : community?.tabs[0]?.key ?? "";
   const activeTab = community?.tabs.find((tab) => tab.key === activeGroup);
   const activeTag = activeTab?.tag;
-  const limit = 12;
-
-  const { data, isLoading, isError } = useQuery({
-    queryKey: queryKeys.articles.list(page, limit, activeTag),
-    queryFn: () => getArticlesRequest(page, limit, activeTag),
-    enabled: isValidCommunity,
-  });
-
-  const articles = data?.articles ?? [];
-  const pagination = data?.pagination;
 
   const pageTitle = useMemo(() => {
     if (!community) {
@@ -78,7 +65,7 @@ export default function CommunityPage() {
                 key={tab.key}
                 type="button"
                 onClick={() => {
-                  setSearchParams({ group: tab.key, page: "1" });
+                  setSearchParams({ group: tab.key });
                 }}
                 className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
                   activeGroup === tab.key
@@ -93,47 +80,13 @@ export default function CommunityPage() {
         </aside>
 
         <section>
-          {isLoading ? <p>Loading community posts...</p> : null}
-          {isError ? <p>Failed to load community posts.</p> : null}
-          {!isLoading && !isError ? (
-            <ArticleList articles={articles} columns={2} compact />
-          ) : null}
-
-          {pagination ? (
-            <div className="mt-8 flex items-center justify-between">
-              <Button
-                type="button"
-                className="bg-gray-100 text-gray-700 hover:bg-gray-200"
-                disabled={pagination.page <= 1}
-                onClick={() =>
-                  setSearchParams({
-                    group: activeGroup,
-                    page: String(pagination.page - 1),
-                  })
-                }
-              >
-                Previous
-              </Button>
-
-              <span className="text-sm text-gray-600">
-                Page {pagination.page} of {pagination.totalPages || 1}
-              </span>
-
-              <Button
-                type="button"
-                className="bg-gray-100 text-gray-700 hover:bg-gray-200"
-                disabled={pagination.page >= pagination.totalPages}
-                onClick={() =>
-                  setSearchParams({
-                    group: activeGroup,
-                    page: String(pagination.page + 1),
-                  })
-                }
-              >
-                Next
-              </Button>
-            </div>
-          ) : null}
+          <ArticleFeedInfinite
+            key={activeTag ?? ""}
+            tag={activeTag}
+            limit={COMMUNITY_FEED_LIMIT}
+            columns={2}
+            compact
+          />
         </section>
       </div>
     </div>

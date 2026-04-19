@@ -22,3 +22,23 @@ export const getDashboardSocialSchema = z.object({
   params: z.object({}).optional(),
   query: z.object({}).optional(),
 });
+
+export const getDashboardNotificationsSchema = z.object({
+  body: z.object({}).optional(),
+  params: z.object({}).optional(),
+  query: z.object({
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+  }),
+});
+
+export const getNotificationsUnreadSchema = z.object({
+  body: z.object({}).optional(),
+  params: z.object({}).optional(),
+  query: z.object({}).optional(),
+});
+
+export const markNotificationsViewedSchema = z.object({
+  body: z.object({}).optional(),
+  params: z.object({}).optional(),
+  query: z.object({}).optional(),
+});

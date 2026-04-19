@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useAppSelector } from "@/shared/hooks/redux";
 import type { Comment } from "@/entities/comment/types/comment";
+import ConfirmDialog from "@/shared/ui/confirm-dialog";
 
 type Props = {
     comments: Comment[];
@@ -13,6 +15,7 @@ export default function CommentList({
     deletingId = null,
 }: Props) {
      const currentUser = useAppSelector((state) => state.auth.user);
+     const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
      if(!comments.length) {
         return (
@@ -46,11 +49,8 @@ export default function CommentList({
                             <button
                               type="button"
                               disabled={deletingId === comment.id}
-                              onClick={async () => {
-                                const confirmed = window.confirm("Are you sure you want to delete this comment?");
-                                if(!confirmed) return;
-                                await onDelete(comment.id);
-                              }}
+                              onClick={() => setPendingDeleteId(comment.id)}
+                              className="text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50 cursor-pointer"
                             >
                                 {deletingId === comment.id ? "Deleting..." : "Delete"}
                             </button>
@@ -63,6 +63,28 @@ export default function CommentList({
                     </div>
                 );
             })}
+
+            {onDelete && pendingDeleteId ? (
+              <ConfirmDialog
+                open={true}
+                title="删除评论"
+                description="确定要删除这条评论吗？删除后无法恢复。"
+                confirmLabel="删除"
+                cancelLabel="取消"
+                variant="danger"
+                loading={deletingId === pendingDeleteId}
+                onCancel={() => {
+                  if (deletingId === pendingDeleteId) {
+                    return;
+                  }
+                  setPendingDeleteId(null);
+                }}
+                onConfirm={async () => {
+                  await onDelete(pendingDeleteId);
+                  setPendingDeleteId(null);
+                }}
+              />
+            ) : null}
         </div>
      );
 }

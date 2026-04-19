@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 
 type Props = {
   content: string;
@@ -18,7 +19,7 @@ export default function MarkdownPreview({ content, variant = "editor" }: Props) 
       }
     >
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
           h1: ({ children }) => (
             <h1
@@ -145,6 +146,7 @@ export default function MarkdownPreview({ content, variant = "editor" }: Props) 
           td: ({ children }) => (
             <td className="border border-gray-300 px-3 py-2">{children}</td>
           ),
+          br: () => <br />,
           hr: () => <hr className="my-8 border-gray-200" />,
           img: ({ src, alt }) => (
             <img

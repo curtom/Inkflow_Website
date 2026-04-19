@@ -1,6 +1,6 @@
 import { cn } from "@/shared/lib/cn";
 import { NavLink } from "react-router";
-import { House, Settings, User, SquarePen, LayoutDashboard, UsersRound } from 'lucide-react';
+import { House, Settings, User, SquarePen, LayoutDashboard } from 'lucide-react';
 
 type SidebarProps = {
     open: boolean;
@@ -30,11 +30,6 @@ export default function Sidebar({ open }: SidebarProps) {
                 <NavLink to="/" className={linkClass} end>
                     <House className="w-5 h-5" />
                     Home
-                </NavLink>
-
-                <NavLink to="/community/language-learning?tab=language-english" className={linkClass}>
-                    <UsersRound className="w-5 h-5" />
-                    Communities
                 </NavLink>
 
                 <NavLink to="/profile" className={linkClass}>

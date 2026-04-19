@@ -84,3 +84,68 @@ export async function getDashboardSocialRequest() {
 export async function getDashboardHistoryRequest(page = 1, limit = 20) {
   return (await api.get(ENDPOINTS.dashboard.history, { params: { page, limit } })) as unknown as DashboardHistoryResponse;
 }
+
+type NotificationUser = DashboardSocialUser;
+
+type NotificationInteractionItem =
+  | {
+      kind: "like" | "favorite";
+      createdAt: string;
+      actor: NotificationUser;
+      article: { slug: string; title: string };
+    }
+  | {
+      kind: "comment";
+      id: string;
+      createdAt: string;
+      actor: NotificationUser;
+      article: { slug: string; title: string };
+      excerpt: string;
+    }
+  | {
+      kind: "following_post";
+      createdAt: string;
+      actor: NotificationUser;
+      article: { slug: string; title: string };
+    };
+
+type NotificationFollowItem = {
+  createdAt: string;
+  actor: NotificationUser;
+};
+
+type DashboardNotificationsResponse = {
+  message: string;
+  data: {
+    interaction: NotificationInteractionItem[];
+    followNotifications: NotificationFollowItem[];
+    followers: Array<{
+      user: NotificationUser;
+      followedAt: string;
+    }>;
+  };
+};
+
+type NotificationsUnreadResponse = {
+  message: string;
+  data: {
+    unreadCount: number;
+  };
+};
+
+export async function getDashboardNotificationsRequest(limit = 50) {
+  return (await api.get(ENDPOINTS.dashboard.notifications, {
+    params: { limit },
+  })) as unknown as DashboardNotificationsResponse;
+}
+
+export async function getNotificationsUnreadRequest() {
+  return (await api.get(ENDPOINTS.dashboard.notificationsUnread)) as unknown as NotificationsUnreadResponse;
+}
+
+export async function postNotificationsMarkViewedRequest() {
+  return (await api.post(ENDPOINTS.dashboard.notificationsMarkViewed)) as unknown as {
+    message: string;
+    data: { ok: true };
+  };
+}

@@ -14,6 +14,7 @@ import SearchPage from "@/pages/search";
 import PublicProfilePage from "@/pages/public-profile";
 import DashboardPage from "@/pages/dashboard";
 import CommunityPage from "@/pages/community";
+import NotificationsPage from "@/pages/notifications";
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
           { path: "editor/:slug", element: <EditArticlePage /> },
           { path: "settings", element: <SettingsPage /> },
           { path: "profile", element: <ProfilePage /> },
+          { path: "notifications", element: <NotificationsPage /> },
           { path: "dashboard", element: <DashboardPage /> },
         ],
       },

@@ -1,8 +1,11 @@
 import { type FormEvent, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router";
+import { getNotificationsUnreadRequest } from "@/features/dashboard/api/dashboard-api";
+import { queryKeys } from "@/shared/api/query-keys";
 import { useAppSelector } from "@/shared/hooks/redux";
 import UserMenu from "@/widgets/user-menu";
-import { Search, SquarePen } from 'lucide-react';
+import { Bell, Search, SquarePen } from "lucide-react";
 
 type NavbarProps = {
   onToggleSidebar: () => void;
@@ -12,6 +15,15 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const navigate = useNavigate();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const [searchValue, setSearchValue] = useState("");
+
+  const unreadQuery = useQuery({
+    queryKey: queryKeys.dashboard.notificationsUnread,
+    queryFn: getNotificationsUnreadRequest,
+    enabled: isAuthenticated,
+  });
+  const unreadCount = unreadQuery.data?.data?.unreadCount ?? 0;
+  const unreadBadge =
+    unreadCount > 99 ? "99+" : unreadCount > 0 ? String(unreadCount) : null;
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -61,6 +73,27 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
               >
                 <SquarePen className="w-5 h-5" />
                 Write
+              </Link>
+              <Link
+                to="/notifications"
+                className="relative inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+                title="消息通知"
+                aria-label={
+                  unreadCount > 0 ? `消息通知，${unreadCount} 条未读` : "消息通知"
+                }
+              >
+                <span className="relative inline-flex">
+                  <Bell className="w-5 h-5" />
+                  {unreadBadge ? (
+                    <span
+                      className="absolute -right-2.5 -top-2 min-h-5 min-w-5 rounded-full bg-red-500 px-1 text-center text-[10px] font-bold leading-5 text-white ring-2 ring-white tabular-nums"
+                      aria-hidden
+                    >
+                      {unreadBadge}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="hidden sm:inline">通知</span>
               </Link>
               <UserMenu />
             </>

@@ -88,7 +88,8 @@ function sanitizeUser(user: {
      username: string,
      page = 1,
      limit = 10,
-     currentUserId?: string
+     currentUserId?: string,
+     sort: "newest" | "likes" = "newest"
   ) {
      const user = await User.findOne({ username});
 
@@ -99,8 +100,10 @@ function sanitizeUser(user: {
      const skip = (page - 1) * limit;
 
      const [articles, total, followMeta] = await Promise.all([
-        Article.find({ author: user._id })
-        .sort({ createdAt: -1 })
+        (sort === "likes"
+          ? Article.find({ author: user._id }).sort({ likesCount: -1, createdAt: -1 })
+          : Article.find({ author: user._id }).sort({ createdAt: -1 })
+        )
         .skip(skip)
         .limit(limit)
         .populate("author", "username email bio avatar"),

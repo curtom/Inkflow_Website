@@ -13,12 +13,14 @@ export const queryKeys = {
       },
       publicProfile: {
         detail: (username: string) => ["public-profile", "detail", username] as const,
-        articles: (username: string, page: number, limit: number) =>
-          ["public-profile", "articles", username, page, limit] as const,
+        articles: (username: string, page: number, limit: number, sort: string) =>
+          ["public-profile", "articles", username, page, limit, sort] as const,
       },
     articles: {
         list: (page: number, limit: number, tag?: string) =>
             ["articles", "list", page, limit, tag ?? ""] as const,
+        infiniteList: (limit: number, tag: string) =>
+            ["articles", "infinite", limit, tag] as const,
         detail: (slug: string) => ["articles", "details", slug] as const,
         comments: (slug: string) => ["articles", "comments", slug] as const,
     },
@@ -29,5 +31,7 @@ export const queryKeys = {
         overview: (month?: number) => ["dashboard", "overview", month ?? "current"] as const,
         social: ["dashboard", "social"] as const,
         history: (page: number, limit: number) => ["dashboard", "history", page, limit] as const,
+        notifications: (limit: number) => ["dashboard", "notifications", limit] as const,
+        notificationsUnread: ["dashboard", "notifications-unread"] as const,
     },
 };

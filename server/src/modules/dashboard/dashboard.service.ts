@@ -5,6 +5,7 @@ import { Comment } from "../comments/comment.model";
 import { ReactionEvent } from "../reactions/reaction-event.model";
 import { ArticleView } from "../views/article-view.model";
 import { Follow } from "../follows/follow.model";
+import { User } from "../users/user.model";
 
 type DashboardUser = {
   _id: unknown;
@@ -129,6 +130,200 @@ export async function getDashboardOverview(userId: string, month?: number) {
       favoritesCount,
     },
     dailyViews,
+  };
+}
+
+type InteractionNotificationItem =
+  | {
+      kind: "like" | "favorite";
+      createdAt: Date;
+      actor: ReturnType<typeof sanitizeUser>;
+      article: { slug: string; title: string };
+    }
+  | {
+      kind: "comment";
+      id: string;
+      createdAt: Date;
+      actor: ReturnType<typeof sanitizeUser>;
+      article: { slug: string; title: string };
+      excerpt: string;
+    }
+  | {
+      kind: "following_post";
+      createdAt: Date;
+      actor: ReturnType<typeof sanitizeUser>;
+      article: { slug: string; title: string };
+    };
+
+type FollowNotificationItem = {
+  createdAt: Date;
+  actor: ReturnType<typeof sanitizeUser>;
+};
+
+function excerptCommentContent(content: string, maxLen = 72) {
+  const trimmed = content.trim();
+  if (trimmed.length <= maxLen) {
+    return trimmed;
+  }
+  return `${trimmed.slice(0, maxLen)}…`;
+}
+
+export async function markNotificationsViewed(userId: string) {
+  await User.updateOne({ _id: userId }, { $set: { notificationsLastViewedAt: new Date() } });
+  return { ok: true as const };
+}
+
+export async function getNotificationsUnreadStatus(userId: string) {
+  const user = await User.findById(userId).select("notificationsLastViewedAt").lean();
+  const lastViewed: Date = user?.notificationsLastViewedAt ?? new Date(0);
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  const [myArticles, followingRows] = await Promise.all([
+    Article.find({ author: userObjectId }).select("_id").lean(),
+    Follow.find({ follower: userId }).select("following").lean(),
+  ]);
+
+  const articleIds = myArticles.map((a) => a._id);
+  const followingIds = followingRows.map((r) => r.following).filter(Boolean);
+
+  const [followCount, reactionCount, commentCount, followingPostCount] = await Promise.all([
+    Follow.countDocuments({ following: userId, createdAt: { $gt: lastViewed } }),
+    ReactionEvent.countDocuments({ articleAuthor: userId, createdAt: { $gt: lastViewed } }),
+    articleIds.length
+      ? Comment.countDocuments({
+          article: { $in: articleIds },
+          author: { $ne: userObjectId },
+          createdAt: { $gt: lastViewed },
+        })
+      : Promise.resolve(0),
+    followingIds.length
+      ? Article.countDocuments({
+          author: { $in: followingIds },
+          createdAt: { $gt: lastViewed },
+        })
+      : Promise.resolve(0),
+  ]);
+
+  const unreadCount = followCount + reactionCount + commentCount + followingPostCount;
+  return { unreadCount };
+}
+
+export async function getDashboardNotifications(userId: string, activityLimit = 50) {
+  if (!Number.isInteger(activityLimit) || activityLimit < 1 || activityLimit > 100) {
+    throw new AppError("limit must be an integer between 1 and 100", 400);
+  }
+
+  const fetchCap = Math.min(200, Math.max(activityLimit * 4, 80));
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  const [myArticles, followingLinks] = await Promise.all([
+    Article.find({ author: userObjectId }).select("_id").lean(),
+    Follow.find({ follower: userId }).select("following").lean(),
+  ]);
+
+  const articleIds = myArticles.map((a) => a._id);
+  const followingIds = followingLinks.map((l) => l.following).filter(Boolean);
+
+  const [followEvents, reactionEvents, commentRows, followerRows, postsFromFollowing] = await Promise.all([
+    Follow.find({ following: userId })
+      .sort({ createdAt: -1 })
+      .limit(fetchCap)
+      .populate("follower", "username email bio avatar"),
+    ReactionEvent.find({ articleAuthor: userId })
+      .sort({ createdAt: -1 })
+      .limit(fetchCap)
+      .populate("user", "username email bio avatar")
+      .populate("article", "title slug"),
+    articleIds.length
+      ? Comment.find({
+          article: { $in: articleIds },
+          author: { $ne: userObjectId },
+        })
+          .sort({ createdAt: -1 })
+          .limit(fetchCap)
+          .populate("author", "username email bio avatar")
+          .populate("article", "title slug")
+      : Promise.resolve([]),
+    Follow.find({ following: userId })
+      .sort({ createdAt: -1 })
+      .populate("follower", "username email bio avatar"),
+    followingIds.length
+      ? Article.find({ author: { $in: followingIds } })
+          .sort({ createdAt: -1 })
+          .limit(fetchCap)
+          .populate("author", "username email bio avatar")
+      : Promise.resolve([]),
+  ]);
+
+  const interaction: InteractionNotificationItem[] = [];
+
+  for (const doc of postsFromFollowing) {
+    if (!doc.author) {
+      continue;
+    }
+    interaction.push({
+      kind: "following_post",
+      createdAt: doc.createdAt,
+      actor: sanitizeUser(doc.author as unknown as DashboardUser),
+      article: { slug: doc.slug, title: doc.title },
+    });
+  }
+
+  for (const row of reactionEvents) {
+    if (!row.user || !row.article) {
+      continue;
+    }
+    const articleDoc = row.article as unknown as { title: string; slug: string };
+    interaction.push({
+      kind: row.type,
+      createdAt: row.createdAt,
+      actor: sanitizeUser(row.user as unknown as DashboardUser),
+      article: { slug: articleDoc.slug, title: articleDoc.title },
+    });
+  }
+
+  for (const row of commentRows) {
+    if (!row.author || !row.article) {
+      continue;
+    }
+    const articleDoc = row.article as unknown as { title: string; slug: string };
+    interaction.push({
+      kind: "comment",
+      id: String(row._id),
+      createdAt: row.createdAt,
+      actor: sanitizeUser(row.author as unknown as DashboardUser),
+      article: { slug: articleDoc.slug, title: articleDoc.title },
+      excerpt: excerptCommentContent(row.content),
+    });
+  }
+
+  interaction.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const interactionTrimmed = interaction.slice(0, activityLimit);
+
+  const followNotifications: FollowNotificationItem[] = [];
+  for (const row of followEvents) {
+    if (!row.follower) {
+      continue;
+    }
+    followNotifications.push({
+      createdAt: row.createdAt,
+      actor: sanitizeUser(row.follower as unknown as DashboardUser),
+    });
+  }
+  followNotifications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const followNotificationsTrimmed = followNotifications.slice(0, activityLimit);
+
+  const followers = followerRows
+    .filter((row) => row.follower)
+    .map((row) => ({
+      user: sanitizeUser(row.follower as unknown as DashboardUser),
+      followedAt: row.createdAt,
+    }));
+
+  return {
+    interaction: interactionTrimmed,
+    followNotifications: followNotificationsTrimmed,
+    followers,
   };
 }
 

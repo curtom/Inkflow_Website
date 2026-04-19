@@ -46,12 +46,17 @@ export async function getPublicProfileRequest(username: string) {
     return (await api.get(ENDPOINTS.publicProfile.detail(username))) as unknown as PublicProfileResponse;
 }
 
+export type PublicProfileArticlesSort = "newest" | "likes";
+
 export async function getPublicProfileArticlesRequest(
     username: string,
     page = 1,
-    limit = 10
+    limit = 10,
+    sort: PublicProfileArticlesSort = "newest"
 ) {
-    return (await api.get(ENDPOINTS.publicProfile.articles(username), {params: {page, limit}})) as unknown as PublicProfileArticlesResponse;
+    return (await api.get(ENDPOINTS.publicProfile.articles(username), {
+        params: { page, limit, sort },
+    })) as unknown as PublicProfileArticlesResponse;
 }
 
 export async function followUserRequest(username: string) {

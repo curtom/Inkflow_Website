@@ -1,7 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../common/utils/app-error";
 import { successResponse } from "../../common/utils/api-response";
-import { getDashboardHistory, getDashboardOverview, getDashboardSocial } from "./dashboard.service";
+import {
+  getDashboardHistory,
+  getDashboardNotifications,
+  getDashboardOverview,
+  getDashboardSocial,
+  getNotificationsUnreadStatus,
+  markNotificationsViewed,
+} from "./dashboard.service";
 
 export async function getDashboardOverviewController(
   req: Request,
@@ -33,6 +40,58 @@ export async function getDashboardSocialController(
 
     const result = await getDashboardSocial(req.user.userId);
     res.status(200).json(successResponse("Dashboard social data fetched successfully", result));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getDashboardNotificationsController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!req.user?.userId) {
+      throw new AppError("Unauthorized", 401);
+    }
+
+    const limit = typeof req.query.limit === "string" ? Number(req.query.limit) : 50;
+    const result = await getDashboardNotifications(req.user.userId, limit);
+    res.status(200).json(successResponse("Notifications fetched successfully", result));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getNotificationsUnreadController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!req.user?.userId) {
+      throw new AppError("Unauthorized", 401);
+    }
+
+    const result = await getNotificationsUnreadStatus(req.user.userId);
+    res.status(200).json(successResponse("Unread notifications status fetched", result));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function markNotificationsViewedController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!req.user?.userId) {
+      throw new AppError("Unauthorized", 401);
+    }
+
+    const result = await markNotificationsViewed(req.user.userId);
+    res.status(200).json(successResponse("Notifications marked as viewed", result));
   } catch (error) {
     next(error);
   }
