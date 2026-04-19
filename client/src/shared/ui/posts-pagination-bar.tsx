@@ -9,7 +9,7 @@ type PostsPaginationBarProps = {
 };
 
 const btnBase =
-  "inline-flex min-w-[2.25rem] items-center justify-center rounded-lg border px-2.5 py-1.5 text-sm font-medium transition";
+  "inline-flex min-w-[2.25rem] items-center justify-center rounded-xl border px-2.5 py-1.5 text-sm font-medium transition";
 
 export default function PostsPaginationBar({
   page,
@@ -35,8 +35,8 @@ export default function PostsPaginationBar({
         className={cn(
           btnBase,
           page <= 1
-            ? "cursor-not-allowed border-gray-100 text-gray-300"
-            : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+            ? "cursor-not-allowed border-border-cream text-stone"
+            : "border-border-cream bg-ivory text-charcoal shadow-[0_0_0_1px_#f0eee6] hover:bg-parchment"
         )}
       >
         上一页
@@ -46,7 +46,7 @@ export default function PostsPaginationBar({
         item === "ellipsis" ? (
           <span
             key={`e-${index}`}
-            className="inline-flex min-w-[2.25rem] items-center justify-center px-1 text-sm text-gray-500"
+            className="inline-flex min-w-[2.25rem] items-center justify-center px-1 text-sm text-stone"
           >
             ...
           </span>
@@ -58,8 +58,8 @@ export default function PostsPaginationBar({
             className={cn(
               btnBase,
               item === page
-                ? "border-pink-500 bg-pink-500 text-white shadow-sm"
-                : "border-gray-200 bg-white text-gray-800 hover:bg-gray-50"
+                ? "border-terracotta bg-terracotta text-ivory shadow-[0_0_0_1px_#c96442]"
+                : "border-border-cream bg-ivory text-ink shadow-[0_0_0_1px_#f0eee6] hover:bg-parchment"
             )}
           >
             {item}
@@ -74,8 +74,8 @@ export default function PostsPaginationBar({
         className={cn(
           btnBase,
           page >= totalPages
-            ? "cursor-not-allowed border-gray-100 text-gray-300"
-            : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+            ? "cursor-not-allowed border-border-cream text-stone"
+            : "border-border-cream bg-ivory text-charcoal shadow-[0_0_0_1px_#f0eee6] hover:bg-parchment"
         )}
       >
         下一页

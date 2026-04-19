@@ -36,9 +36,9 @@ export default function ProfilePage() {
 
     return (
        <div className="mx-auto max-w-5xl px-4 py-10">
-         <section className="rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
+         <section className="rounded-3xl border border-border-cream bg-ivory p-8 shadow-whisper">
             <div className="flex flex-col gap-6 md:flex-row md:items-center">
-              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-pink-500 text-3xl font-semibold text-white">
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-terracotta text-3xl font-semibold text-ivory">
                 {user.avatar ? (
                     <img 
                       src={user.avatar}
@@ -51,9 +51,9 @@ export default function ProfilePage() {
               </div>
 
               <div className="min-w-0 flex-1">
-                    <h1 className="text-3xl font-bold text-gray-900">{user.username}</h1>
-                    <p className="mt-1 text-gray-500">{user.email}</p>
-                    <p className="mt-4 whitespace-pre-wrap text-gray-700">
+                    <h1 className="text-3xl font-medium text-ink">{user.username}</h1>
+                    <p className="mt-1 text-stone">{user.email}</p>
+                    <p className="mt-4 whitespace-pre-wrap text-charcoal">
                     {user.bio || "No bio yet."}
                     </p>
                 </div>
@@ -61,15 +61,15 @@ export default function ProfilePage() {
          </section>
 
          <section>
-            <div className="mb-6 mt-6 flex gap-3 border-b border-gray-200 pb-3">
+            <div className="mb-6 mt-6 flex gap-3 border-b border-border-cream pb-3">
                 <button
                     type="button"
                     onClick={() => setTab("published")}
                     className={cn(
                     "rounded-full px-4 py-2 text-sm font-medium transition cursor-pointer",
                     tab === "published"
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "bg-terracotta text-ivory shadow-[0_0_0_1px_#c96442]"
+                        : "bg-warm-sand text-charcoal hover:brightness-[0.97]"
                     )}
                 >
                     Published
@@ -81,15 +81,15 @@ export default function ProfilePage() {
                     className={cn(
                     "rounded-full px-4 py-2 text-sm font-medium transition cursor-pointer",
                     tab === "favorites"
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "bg-terracotta text-ivory shadow-[0_0_0_1px_#c96442]"
+                        : "bg-warm-sand text-charcoal hover:brightness-[0.97]"
                     )}
                 >
                     Favorites
                 </button>
             </div>
 
-            <h2 className="mb-6 text-2xl font-bold text-gray-900">
+            <h2 className="mb-6 text-2xl font-medium text-ink">
                 {tab === "published" ? "Published Articles" : "Favorite Articles"}
             </h2>
             {articlesQuery.isLoading ? <p>Loading posts...</p> : null}

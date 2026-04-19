@@ -54,11 +54,11 @@ export default function ArticleFeedInfinite({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   if (isLoading) {
-    return <p className="text-gray-500">加载中…</p>;
+    return <p className="text-olive">加载中…</p>;
   }
 
   if (isError) {
-    return <p className="text-red-500">加载失败。</p>;
+    return <p className="text-error">加载失败。</p>;
   }
 
   return (
@@ -68,11 +68,11 @@ export default function ArticleFeedInfinite({
       <div ref={sentinelRef} className="h-4 w-full" aria-hidden />
 
       {isFetchingNextPage ? (
-        <p className="py-6 text-center text-sm text-gray-500">加载更多…</p>
+        <p className="py-6 text-center text-sm text-stone">加载更多…</p>
       ) : null}
 
       {!hasNextPage && articles.length > 0 ? (
-        <p className="py-8 text-center text-sm text-gray-400">已显示全部内容</p>
+        <p className="py-8 text-center text-sm text-stone">已显示全部内容</p>
       ) : null}
     </div>
   );

@@ -41,10 +41,12 @@ export default function HomePage() {
     <div className="mx-auto max-w-7xl px-4 py-10">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_340px]">
         <section className="min-w-0">
-          <div className="sticky top-16 z-10 -mx-4 mb-8 flex items-start justify-between gap-4 bg-gray-50 px-4 pb-4 pt-2">
+          <div className="sticky top-16 z-10 -mx-4 mb-8 flex items-start justify-between gap-4 bg-parchment/90 px-4 pb-4 pt-2 backdrop-blur-sm">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">{tag ? `Tag: ${tag}` : "Home"}</h1>
-              <p className="mt-2 text-gray-600">
+              <h1 className="font-editorial text-4xl font-medium text-ink md:text-5xl">
+                {tag ? `Tag: ${tag}` : "Home"}
+              </h1>
+              <p className="mt-2 max-w-xl text-lg leading-[1.6] text-olive">
                 {tag
                   ? "Showing articles filtered by topic."
                   : "Explore ideas, stories, and knowledge from creators."}
@@ -54,6 +56,7 @@ export default function HomePage() {
             {tag ? (
               <Button
                 type="button"
+                variant="secondary"
                 onClick={() => {
                   setSearchParams({});
                 }}
@@ -63,16 +66,12 @@ export default function HomePage() {
             ) : null}
           </div>
 
-          <ArticleFeedInfinite
-            tag={tag || undefined}
-            limit={HOME_FEED_LIMIT}
-            compact
-          />
+          <ArticleFeedInfinite tag={tag || undefined} limit={HOME_FEED_LIMIT} compact />
         </section>
 
-        <aside className="sticky top-20 h-fit space-y-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-bold text-gray-900">Communities</h2>
-          <p className="text-sm text-gray-500">
+        <aside className="sticky top-20 h-fit space-y-4 rounded-2xl border border-border-cream bg-ivory p-5 shadow-whisper">
+          <h2 className="font-editorial text-xl font-medium text-ink">Communities</h2>
+          <p className="text-sm leading-[1.6] text-olive">
             Discover topic-based communities. Posts are organized by tags.
           </p>
           <div className="space-y-3">
@@ -82,16 +81,14 @@ export default function HomePage() {
                 <Link
                   key={community.id}
                   to={`/communities/${community.id}`}
-                  className="flex items-start gap-3 rounded-xl border border-gray-100 p-3 transition hover:border-green-300 hover:bg-green-50"
+                  className="flex items-start gap-3 rounded-xl border border-border-cream bg-parchment/40 p-3 shadow-[0_0_0_1px_#f0eee6] transition hover:border-border-warm hover:bg-warm-sand/40"
                 >
-                  <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
+                  <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warm-sand text-charcoal">
                     <Icon className="h-5 w-5" />
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-gray-900">
-                      {community.title}
-                    </span>
-                    <span className="mt-1 block text-xs text-gray-500">
+                    <span className="block text-sm font-medium text-ink">{community.title}</span>
+                    <span className="mt-1 block text-xs leading-[1.5] text-stone">
                       {community.description}
                     </span>
                   </span>

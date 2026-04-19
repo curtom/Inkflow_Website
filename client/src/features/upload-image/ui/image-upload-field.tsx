@@ -34,19 +34,19 @@ export default function ImageUploadField({
    return (
     <div className={`flex ${layout === "horizontal" ? "items-center gap-4" : "flex-col gap-3"}`}>
         {layout === "vertical" && (
-            <span className="text-sm font-medium text-gray-700">{label}</span>
+            <span className="text-sm font-medium text-charcoal">{label}</span>
         )}
 
         {value ? (
             <img 
               src={value}
               alt="Upload preview"
-              className="h-14 w-24 rounded-lg border border-gray-200 object-cover shadow-sm"
+              className="h-14 w-24 rounded-lg border border-border-cream object-cover shadow-whisper"
             />
         ): null}
 
         <div className="flex items-center gap-3">
-            <label className="inline-flex cursor-pointer items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus-within:ring-2 focus-within:ring-green-500 focus-within:ring-offset-2">
+            <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-border-warm bg-ivory px-4 py-2 text-sm font-medium text-charcoal shadow-[0_0_0_1px_#f0eee6] transition hover:bg-parchment focus-within:ring-2 focus-within:ring-focus/35 focus-within:ring-offset-2 focus-within:ring-offset-parchment">
               <span>{uploading ? "Uploading..." : value ? "Change" : label}</span>
               <input
                 type="file"

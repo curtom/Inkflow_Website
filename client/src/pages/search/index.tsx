@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { searchOverviewRequest } from "@/features/search/api/search-api";
 import { queryKeys } from "@/shared/api/query-keys";
 import ArticleReactionBar from "@/features/reactions/ui/article-reaction-bar";
+import { cn } from "@/shared/lib/cn";
 
 type SearchTab = "stories" | "people" | "topics";
 
@@ -39,36 +40,51 @@ export default function SearchPage() {
   return (
     <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_320px]">
       <div>
-        <h1 className="mb-8 text-5xl font-bold text-gray-900">
-          Results for <span className="text-black">{keyword}</span>
+        <h1 className="mb-8 font-editorial text-5xl font-medium text-ink">
+          Results for <span className="text-terracotta">{keyword}</span>
         </h1>
 
-        <div className="mb-8 flex flex-wrap gap-6 border-b border-gray-200 pb-3 text-lg">
+        <div className="mb-8 flex flex-wrap gap-6 border-b border-border-cream pb-3 text-lg">
           <button
             type="button"
             onClick={() => setTab("stories")}
-            className={visibleTab === "stories" ? "font-semibold text-black" : "text-gray-500"}
+            className={cn(
+              "transition",
+              visibleTab === "stories"
+                ? "font-semibold text-ink"
+                : "text-stone hover:text-charcoal"
+            )}
           >
             Stories
           </button>
           <button
             type="button"
             onClick={() => setTab("people")}
-            className={visibleTab === "people" ? "font-semibold text-black" : "text-gray-500"}
+            className={cn(
+              "transition",
+              visibleTab === "people"
+                ? "font-semibold text-ink"
+                : "text-stone hover:text-charcoal"
+            )}
           >
             People
           </button>
           <button
             type="button"
             onClick={() => setTab("topics")}
-            className={visibleTab === "topics" ? "font-semibold text-black" : "text-gray-500"}
+            className={cn(
+              "transition",
+              visibleTab === "topics"
+                ? "font-semibold text-ink"
+                : "text-stone hover:text-charcoal"
+            )}
           >
             Topics
           </button>
         </div>
 
-        {isLoading ? <p>Searching...</p> : null}
-        {isError ? <p>Failed to load search results.</p> : null}
+        {isLoading ? <p className="text-stone">Searching...</p> : null}
+        {isError ? <p className="text-error">Failed to load search results.</p> : null}
 
         {!isLoading && !isError && visibleTab === "stories" ? (
           <div className="space-y-10">
@@ -76,12 +92,12 @@ export default function SearchPage() {
               stories.map((story) => (
                 <article
                   key={story.id}
-                  className="border-b border-gray-200 pb-8"
+                  className="border-b border-border-cream pb-8"
                 >
                   <div className="flex items-center gap-3">
                     <Link
                       to={`/profiles/${encodeURIComponent(story.author.username)}`}
-                      className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-pink-500 text-sm font-semibold text-white"
+                      className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-terracotta text-sm font-semibold text-ivory"
                     >
                       {story.author.avatar ? (
                         <img
@@ -96,7 +112,7 @@ export default function SearchPage() {
 
                     <Link
                       to={`/profiles/${encodeURIComponent(story.author.username)}`}
-                      className="text-sm font-medium text-gray-700 hover:text-green-600"
+                      className="text-sm font-medium text-charcoal hover:text-terracotta"
                     >
                       {story.author.username}
                     </Link>
@@ -104,12 +120,12 @@ export default function SearchPage() {
 
                   <Link
                     to={`/articles/${story.slug}`}
-                    className="mt-3 block text-4xl font-bold leading-tight text-gray-900 hover:text-green-600"
+                    className="mt-3 block font-editorial text-4xl font-medium leading-tight text-ink hover:text-terracotta"
                   >
                     {story.title}
                   </Link>
 
-                  <p className="mt-4 text-2xl leading-relaxed text-gray-600">
+                  <p className="mt-4 text-2xl leading-relaxed text-charcoal">
                     {story.summary}
                   </p>
 
@@ -122,7 +138,7 @@ export default function SearchPage() {
                 </article>
               ))
             ) : (
-              <p className="text-gray-500">No stories found.</p>
+              <p className="text-stone">No stories found.</p>
             )}
           </div>
         ) : null}
@@ -134,10 +150,10 @@ export default function SearchPage() {
                 <Link
                   key={user.id}
                   to={`/profiles/${encodeURIComponent(user.username)}`}
-                  className="block rounded-2xl border border-gray-200 bg-white p-5 transition hover:border-gray-300 hover:bg-gray-50"
+                  className="block rounded-2xl border border-border-cream bg-ivory p-5 shadow-whisper transition hover:border-terracotta/35 hover:bg-parchment"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-pink-500 text-lg font-semibold text-white">
+                    <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-terracotta text-lg font-semibold text-ivory">
                       {user.avatar ? (
                         <img
                           src={user.avatar}
@@ -150,11 +166,11 @@ export default function SearchPage() {
                     </div>
 
                     <div>
-                      <p className="text-2xl font-semibold text-gray-900">
+                      <p className="font-editorial text-2xl font-medium text-ink">
                         {user.username}
                       </p>
-                      <p className="text-gray-500">{user.email}</p>
-                      <p className="mt-1 text-gray-600">
+                      <p className="text-stone">{user.email}</p>
+                      <p className="mt-1 text-charcoal">
                         {user.bio || "No bio yet."}
                       </p>
                     </div>
@@ -162,7 +178,7 @@ export default function SearchPage() {
                 </Link>
               ))
             ) : (
-              <p className="text-gray-500">No people found.</p>
+              <p className="text-stone">No people found.</p>
             )}
           </div>
         ) : null}
@@ -175,18 +191,18 @@ export default function SearchPage() {
                   key={tag.name}
                   type="button"
                   onClick={() => navigate(`/?tag=${encodeURIComponent(tag.name)}`)}
-                  className="flex w-full items-center justify-between rounded-2xl border border-gray-200 bg-white px-5 py-4 text-left transition hover:border-gray-300 hover:bg-gray-50"
+                  className="flex w-full items-center justify-between rounded-2xl border border-border-cream bg-ivory px-5 py-4 text-left shadow-whisper transition hover:border-terracotta/35 hover:bg-parchment"
                 >
-                  <span className="text-lg font-medium text-gray-900">
+                  <span className="text-lg font-medium text-ink">
                     #{tag.name}
                   </span>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-stone">
                     {tag.articleCount} articles
                   </span>
                 </button>
               ))
             ) : (
-              <p className="text-gray-500">No topics found.</p>
+              <p className="text-stone">No topics found.</p>
             )}
           </div>
         ) : null}
@@ -195,7 +211,7 @@ export default function SearchPage() {
       <aside className="hidden lg:block">
         <div className="sticky top-24 space-y-10">
           <section>
-            <h2 className="mb-4 text-3xl font-bold text-gray-900">
+            <h2 className="mb-4 font-editorial text-3xl font-medium text-ink">
               Topics matching {keyword}
             </h2>
 
@@ -205,7 +221,7 @@ export default function SearchPage() {
                   key={tag.name}
                   type="button"
                   onClick={() => navigate(`/?tag=${encodeURIComponent(tag.name)}`)}
-                  className="rounded-full bg-gray-100 px-4 py-2 text-base text-gray-800 transition hover:bg-gray-200"
+                  className="rounded-full bg-warm-sand px-4 py-2 text-base text-charcoal transition hover:brightness-[0.97]"
                 >
                   {tag.name}
                 </button>
@@ -214,7 +230,7 @@ export default function SearchPage() {
           </section>
 
           <section>
-            <h2 className="mb-4 text-3xl font-bold text-gray-900">
+            <h2 className="mb-4 font-editorial text-3xl font-medium text-ink">
               People matching {keyword}
             </h2>
 
@@ -223,9 +239,9 @@ export default function SearchPage() {
                 <Link
                   key={user.id}
                   to={`/profiles/${encodeURIComponent(user.username)}`}
-                  className="flex items-start gap-3 rounded-2xl p-2 transition hover:bg-gray-50"
+                  className="flex items-start gap-3 rounded-2xl p-2 transition hover:bg-parchment"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-pink-500 text-sm font-semibold text-white">
+                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-terracotta text-sm font-semibold text-ivory">
                     {user.avatar ? (
                       <img
                         src={user.avatar}
@@ -238,11 +254,11 @@ export default function SearchPage() {
                   </div>
 
                   <div className="min-w-0">
-                    <p className="truncate text-lg font-semibold text-gray-900">
+                    <p className="truncate text-lg font-semibold text-ink">
                       {user.username}
                     </p>
-                    <p className="truncate text-sm text-gray-500">{user.email}</p>
-                    <p className="mt-1 line-clamp-2 text-sm text-gray-600">
+                    <p className="truncate text-sm text-stone">{user.email}</p>
+                    <p className="mt-1 line-clamp-2 text-sm text-charcoal">
                       {user.bio || "No bio yet."}
                     </p>
                   </div>

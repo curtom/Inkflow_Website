@@ -12,11 +12,7 @@ export default function DeleteArticleButton({ onDelete, loading = false }: Props
 
   return (
     <>
-      <Button
-        type="button"
-        className="bg-red-500 hover:bg-red-600 cursor-pointer"
-        onClick={() => setOpen(true)}
-      >
+      <Button type="button" variant="danger" onClick={() => setOpen(true)}>
         Delete Article
       </Button>
       <ConfirmDialog

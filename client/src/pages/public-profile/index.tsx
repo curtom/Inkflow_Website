@@ -101,9 +101,9 @@ export default function PublicProfilePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
-      <section className="rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
+      <section className="rounded-3xl border border-border-cream bg-ivory p-8 shadow-whisper">
         <div className="flex flex-col gap-6 md:flex-row md:items-center">
-          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-pink-500 text-3xl font-semibold text-white">
+          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-terracotta text-3xl font-semibold text-ivory">
             {user.avatar ? (
               <img
                 src={user.avatar}
@@ -116,12 +116,12 @@ export default function PublicProfilePage() {
           </div>
 
           <div className="min-w-0 flex-1">
-            <h1 className="text-3xl font-bold text-gray-900">{user.username}</h1>
-            <p className="mt-1 text-gray-500">{user.email}</p>
-            <p className="mt-4 whitespace-pre-wrap text-gray-700">
+            <h1 className="text-3xl font-medium text-ink">{user.username}</h1>
+            <p className="mt-1 text-stone">{user.email}</p>
+            <p className="mt-4 whitespace-pre-wrap text-charcoal">
               {user.bio || "No bio yet."}
             </p>
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-stone">
               <span>{user.followersCount} Followers</span>
               <span>{user.followingCount} Following</span>
             </div>
@@ -152,10 +152,10 @@ export default function PublicProfilePage() {
 
       <section className="mt-10">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Published Posts</h2>
+          <h2 className="text-2xl font-medium text-ink">Published Posts</h2>
 
           <div
-            className="inline-flex shrink-0 rounded-lg border border-gray-200 bg-gray-50 p-1 text-sm"
+            className="inline-flex shrink-0 rounded-lg border border-border-cream bg-parchment p-1 text-sm"
             role="group"
             aria-label="排序"
           >
@@ -165,8 +165,8 @@ export default function PublicProfilePage() {
               className={cn(
                 "rounded-md px-3 py-1.5 font-medium transition cursor-pointer",
                 sort === "newest"
-                  ? "bg-pink-500 text-white shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-terracotta text-ivory shadow-[0_0_0_1px_#c96442]"
+                  : "text-charcoal hover:text-ink"
               )}
             >
               最新发布
@@ -177,8 +177,8 @@ export default function PublicProfilePage() {
               className={cn(
                 "rounded-md px-3 py-1.5 font-medium transition cursor-pointer",
                 sort === "likes"
-                  ? "bg-pink-500 text-white shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "bg-terracotta text-ivory shadow-[0_0_0_1px_#c96442]"
+                  : "text-charcoal hover:text-ink"
               )}
             >
               点赞最多

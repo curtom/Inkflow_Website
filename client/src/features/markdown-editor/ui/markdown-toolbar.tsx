@@ -16,13 +16,13 @@ const items = [
 
 export default function MarkdownToolbar({ onAction }: Props) {
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3">
+    <div className="flex flex-wrap items-center gap-2 border-b border-border-cream bg-parchment px-4 py-3">
       {items.map((item) => (
         <button
           key={item.key}
           type="button"
           onClick={() => onAction(item.key)}
-          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+          className="rounded-lg border border-border-cream bg-ivory px-3 py-2 text-sm font-medium text-charcoal shadow-[0_0_0_1px_#f0eee6] transition hover:bg-warm-sand/80"
         >
           {item.label}
         </button>

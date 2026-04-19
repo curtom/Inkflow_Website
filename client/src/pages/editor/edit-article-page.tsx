@@ -75,7 +75,7 @@ export default function EditArticlePage() {
 
     return (
         <div className="mx-auto max-w-6xl px-4 py-6">
-          <h1 className="mb-4 text-3xl font-bold text-gray-900">Edit Post</h1>
+          <h1 className="mb-4 text-3xl font-medium text-ink">Edit Post</h1>
     
           <ArticleForm
             submitText="Update"

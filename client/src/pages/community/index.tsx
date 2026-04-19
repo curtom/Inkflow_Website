@@ -1,10 +1,8 @@
 import { useMemo } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import ArticleFeedInfinite from "@/widgets/article-feed-infinite";
-import {
-  COMMUNITY_CONFIG_MAP,
-  isCommunityId,
-} from "@/features/community/lib/community-config";
+import { COMMUNITY_CONFIG_MAP, isCommunityId } from "@/features/community/lib/community-config";
+import { cn } from "@/shared/lib/cn";
 
 const COMMUNITY_FEED_LIMIT = 12;
 
@@ -33,7 +31,7 @@ export default function CommunityPage() {
   if (!community) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-red-500">Community not found.</p>
+        <p className="text-error">Community not found.</p>
       </div>
     );
   }
@@ -42,24 +40,24 @@ export default function CommunityPage() {
     <div className="mx-auto max-w-8xl px-4 py-10">
       <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{community.title}</h1>
-          <p className="mt-2 text-gray-600">{community.description}</p>
-          <p className="mt-1 text-sm text-gray-500">{pageTitle}</p>
+          <h1 className="font-editorial text-3xl font-medium text-ink md:text-4xl">
+            {community.title}
+          </h1>
+          <p className="mt-2 max-w-2xl text-lg leading-[1.6] text-olive">{community.description}</p>
+          <p className="mt-1 text-sm text-stone">{pageTitle}</p>
         </div>
         <Link
           to="/"
-          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+          className="rounded-xl border border-border-cream bg-ivory px-4 py-2 text-sm font-medium text-charcoal shadow-[0_0_0_1px_#f0eee6] transition hover:bg-parchment"
         >
           Back to Home
         </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
-            Groups
-          </h2>
-          <div className="space-y-2">
+        <aside className="rounded-2xl border border-border-cream bg-ivory p-4 shadow-whisper">
+          <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-stone">Groups</h2>
+          <div className="space-y-1">
             {community.tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -67,11 +65,12 @@ export default function CommunityPage() {
                 onClick={() => {
                   setSearchParams({ group: tab.key });
                 }}
-                className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                className={cn(
+                  "w-full rounded-xl px-3 py-2 text-left text-sm font-medium transition",
                   activeGroup === tab.key
-                    ? "bg-green-50 text-green-700"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
+                    ? "bg-warm-sand text-terracotta shadow-[0_0_0_1px_#d1cfc5]"
+                    : "text-olive hover:bg-parchment hover:text-ink"
+                )}
               >
                 {tab.label}
               </button>

@@ -8,17 +8,17 @@ export default function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-        <Navbar onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+    <div className="min-h-screen bg-parchment">
+      <Navbar onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
 
       <div className="mx-auto flex max-w-8xl">
         <Sidebar open={sidebarOpen} />
-        
+
         <div className="flex min-w-0 flex-1 flex-col">
-            <main className="flex-1 min-w-0">
+          <main className="min-w-0 flex-1">
             <Outlet />
-            </main>
-            <Footer />
+          </main>
+          <Footer />
         </div>
       </div>
     </div>

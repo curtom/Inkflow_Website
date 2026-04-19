@@ -66,12 +66,12 @@ export default function SettingsPage() {
 
     return (
         <div className="mx-auto max-w-3xl px-4 py-10">
-            <h1 className="mb-2 text-3xl font-bold text-gray-900">Settings</h1>
-            <p className="mb-6 text-gray-600">
+            <h1 className="mb-2 text-3xl font-medium text-ink">Settings</h1>
+            <p className="mb-6 text-charcoal">
                 Update your personal information and password.
             </p>
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-border-cream bg-ivory p-6 shadow-whisper">
                 <SettingsForm
                     defaultValues={{
                         username: user.username,

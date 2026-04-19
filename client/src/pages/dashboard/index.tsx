@@ -38,7 +38,7 @@ function UserAvatar({
   avatar?: string;
 }) {
   return (
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-pink-500 text-sm font-semibold text-white">
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-terracotta text-sm font-semibold text-ivory">
       {avatar ? (
         <img
           src={avatar}
@@ -59,43 +59,44 @@ function ViewsLineChart({
 }) {
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-500 shadow-sm">
+      <div className="rounded-2xl border border-border-cream bg-ivory p-6 text-sm text-stone shadow-whisper">
         No daily view data yet.
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-border-cream bg-ivory p-4 shadow-whisper">
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={data}
             margin={{ top: 12, right: 16, left: 6, bottom: 10 }}
           >
-            <CartesianGrid strokeDasharray="4 4" stroke="#e5e7eb" vertical={false} />
+            <CartesianGrid strokeDasharray="4 4" stroke="#e8e6dc" vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 12, fill: "#6b7280" }}
+              tick={{ fontSize: 12, fill: "#87867f" }}
               tickLine={false}
-              axisLine={{ stroke: "#e5e7eb" }}
+              axisLine={{ stroke: "#e8e6dc" }}
               minTickGap={16}
             />
             <YAxis
-              tick={{ fontSize: 12, fill: "#6b7280" }}
+              tick={{ fontSize: 12, fill: "#87867f" }}
               tickLine={false}
-              axisLine={{ stroke: "#e5e7eb" }}
+              axisLine={{ stroke: "#e8e6dc" }}
               allowDecimals={false}
               width={38}
             />
             <Tooltip
-              cursor={{ stroke: "#86efac", strokeWidth: 2 }}
+              cursor={{ stroke: "#c96442", strokeWidth: 2, strokeOpacity: 0.35 }}
               contentStyle={{
                 borderRadius: "0.75rem",
-                borderColor: "#d1d5db",
-                boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
+                borderColor: "#f0eee6",
+                boxShadow: "0 8px 30px rgb(0 0 0 / 0.06)",
+                background: "#faf9f5",
               }}
-              labelStyle={{ color: "#111827", fontWeight: 600 }}
+              labelStyle={{ color: "#141413", fontWeight: 600 }}
               formatter={(value) => {
                 const numericValue = Array.isArray(value) ? value[0] ?? 0 : value ?? 0;
                 return [`${numericValue} views`, "Views"];
@@ -104,10 +105,10 @@ function ViewsLineChart({
             <Line
               type="monotone"
               dataKey="viewsCount"
-              stroke="#16a34a"
+              stroke="#c96442"
               strokeWidth={3}
-              dot={{ r: 3, stroke: "#16a34a", fill: "#ffffff", strokeWidth: 2 }}
-              activeDot={{ r: 6, stroke: "#16a34a", fill: "#ffffff", strokeWidth: 2 }}
+              dot={{ r: 3, stroke: "#c96442", fill: "#faf9f5", strokeWidth: 2 }}
+              activeDot={{ r: 6, stroke: "#c96442", fill: "#faf9f5", strokeWidth: 2 }}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -171,10 +172,10 @@ export default function DashboardPage() {
 
   const renderAnalytics = () => {
     if (overviewQuery.isLoading) {
-      return <p className="text-gray-500">Loading analytics...</p>;
+      return <p className="text-stone">Loading analytics...</p>;
     }
     if (overviewQuery.isError || !overviewQuery.data?.data) {
-      return <p className="text-red-500">Failed to load analytics.</p>;
+      return <p className="text-error">Failed to load analytics.</p>;
     }
 
     const overview = overviewQuery.data.data;
@@ -190,13 +191,13 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">Post Analytics</h2>
-          <label className="flex items-center gap-2 text-sm text-gray-600">
+          <h2 className="text-2xl font-bold text-ink">Post Analytics</h2>
+          <label className="flex items-center gap-2 text-sm text-charcoal">
             Month:
             <select
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-green-500"
+              className="rounded-lg border border-border-warm bg-ivory px-3 py-2 text-sm text-ink outline-none focus:border-focus focus:ring-2 focus:ring-focus/25"
             >
               {monthOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -208,26 +209,26 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">Views</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900">{overview.summary.viewsCount}</p>
+          <div className="rounded-2xl border border-border-cream bg-ivory p-5 shadow-whisper">
+            <p className="text-sm text-stone">Views</p>
+            <p className="mt-2 text-3xl font-bold text-ink">{overview.summary.viewsCount}</p>
           </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">Comments</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900">{overview.summary.commentsCount}</p>
+          <div className="rounded-2xl border border-border-cream bg-ivory p-5 shadow-whisper">
+            <p className="text-sm text-stone">Comments</p>
+            <p className="mt-2 text-3xl font-bold text-ink">{overview.summary.commentsCount}</p>
           </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">Likes</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900">{overview.summary.likesCount}</p>
+          <div className="rounded-2xl border border-border-cream bg-ivory p-5 shadow-whisper">
+            <p className="text-sm text-stone">Likes</p>
+            <p className="mt-2 text-3xl font-bold text-ink">{overview.summary.likesCount}</p>
           </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">Favorites</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900">{overview.summary.favoritesCount}</p>
+          <div className="rounded-2xl border border-border-cream bg-ivory p-5 shadow-whisper">
+            <p className="text-sm text-stone">Favorites</p>
+            <p className="mt-2 text-3xl font-bold text-ink">{overview.summary.favoritesCount}</p>
           </div>
         </div>
 
         <div>
-          <h3 className="mb-3 text-lg font-semibold text-gray-900">Daily Views</h3>
+          <h3 className="mb-3 text-lg font-semibold text-ink">Daily Views</h3>
           <ViewsLineChart data={chartData} />
         </div>
       </div>
@@ -236,25 +237,25 @@ export default function DashboardPage() {
 
   const renderSocial = () => {
     if (socialQuery.isLoading) {
-      return <p className="text-gray-500">Loading social data...</p>;
+      return <p className="text-stone">Loading social data...</p>;
     }
     if (socialQuery.isError || !socialQuery.data?.data) {
-      return <p className="text-red-500">Failed to load social data.</p>;
+      return <p className="text-error">Failed to load social data.</p>;
     }
 
     const social = socialQuery.data.data;
     return (
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-xl font-bold text-gray-900">Following ({social.following.length})</h2>
+        <section className="rounded-2xl border border-border-cream bg-ivory p-5 shadow-whisper">
+          <h2 className="mb-4 text-xl font-bold text-ink">Following ({social.following.length})</h2>
           <div className="space-y-3">
             {social.following.length === 0 ? (
-              <p className="text-sm text-gray-500">No following users.</p>
+              <p className="text-sm text-stone">No following users.</p>
             ) : (
               social.following.map((item) => (
                 <div
                   key={item.user.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 p-3"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border-cream p-3"
                 >
                   <Link
                     to={`/profiles/${item.user.username}`}
@@ -265,15 +266,15 @@ export default function DashboardPage() {
                       avatar={item.user.avatar}
                     />
                     <div className="min-w-0">
-                      <p className="font-medium text-gray-900 hover:text-green-600">
+                      <p className="font-medium text-ink hover:text-terracotta">
                         {item.user.username}
                       </p>
-                      <p className="truncate text-xs text-gray-500">{item.user.email}</p>
+                      <p className="truncate text-xs text-stone">{item.user.email}</p>
                     </div>
                   </Link>
                   <Button
                     type="button"
-                    className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    variant="secondary"
                     loading={
                       followMutation.isPending &&
                       followMutation.variables?.username === item.user.username
@@ -293,16 +294,16 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-xl font-bold text-gray-900">Followers ({social.followers.length})</h2>
+        <section className="rounded-2xl border border-border-cream bg-ivory p-5 shadow-whisper">
+          <h2 className="mb-4 text-xl font-bold text-ink">Followers ({social.followers.length})</h2>
           <div className="space-y-3">
             {social.followers.length === 0 ? (
-              <p className="text-sm text-gray-500">No followers yet.</p>
+              <p className="text-sm text-stone">No followers yet.</p>
             ) : (
               social.followers.map((item) => (
                 <div
                   key={item.user.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 p-3"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border-cream p-3"
                 >
                   <Link
                     to={`/profiles/${item.user.username}`}
@@ -313,10 +314,10 @@ export default function DashboardPage() {
                       avatar={item.user.avatar}
                     />
                     <div className="min-w-0">
-                      <p className="font-medium text-gray-900 hover:text-green-600">
+                      <p className="font-medium text-ink hover:text-terracotta">
                         {item.user.username}
                       </p>
-                      <p className="truncate text-xs text-gray-500">{item.user.email}</p>
+                      <p className="truncate text-xs text-stone">{item.user.email}</p>
                     </div>
                   </Link>
                 </div>
@@ -330,18 +331,18 @@ export default function DashboardPage() {
 
   const renderHistory = () => {
     if (historyQuery.isLoading) {
-      return <p className="text-gray-500">Loading history...</p>;
+      return <p className="text-stone">Loading history...</p>;
     }
     if (historyQuery.isError || !historyQuery.data?.data) {
-      return <p className="text-red-500">Failed to load history.</p>;
+      return <p className="text-error">Failed to load history.</p>;
     }
 
     const history = historyQuery.data.data;
     return (
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-gray-900">View History</h2>
+        <h2 className="text-2xl font-bold text-ink">View History</h2>
         {history.items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-gray-500">
+          <div className="rounded-2xl border border-dashed border-border-warm bg-ivory p-8 text-center text-stone">
             No view history yet.
           </div>
         ) : (
@@ -358,25 +359,25 @@ export default function DashboardPage() {
                     navigate(`/articles/${item.article.slug}`);
                   }
                 }}
-                className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-green-300 hover:shadow-md"
+                className="cursor-pointer rounded-2xl border border-border-cream bg-ivory p-5 shadow-whisper transition hover:border-terracotta/40 hover:shadow-whisper"
               >
-                <p className="text-lg font-semibold text-gray-900 hover:text-green-600">
+                <p className="text-lg font-semibold text-ink hover:text-terracotta">
                   {item.article.title}
                 </p>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-stone">
                   By{" "}
                   <Link
                     to={`/profiles/${item.article.author.username}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="group inline-flex font-medium text-gray-700 hover:text-gray-900"
+                    className="group inline-flex font-medium text-charcoal hover:text-ink"
                   >
-                    <span className="border-b border-transparent transition-colors group-hover:border-black">
+                    <span className="border-b border-transparent transition-colors group-hover:border-ink">
                       {item.article.author.username}
                     </span>
                   </Link>
                 </p>
-                <p className="mt-2 text-sm text-gray-600">{item.article.summary}</p>
-                <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
+                <p className="mt-2 text-sm text-charcoal">{item.article.summary}</p>
+                <div className="mt-3 flex flex-wrap gap-4 text-xs text-stone">
                   <span>Views recorded: {item.viewsCount}</span>
                   <span>Last viewed: {new Date(item.lastViewedAt).toLocaleString()}</span>
                 </div>
@@ -388,18 +389,18 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <Button
             type="button"
-            className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+            variant="secondary"
             disabled={history.pagination.page <= 1}
             onClick={() => setHistoryPage((prev) => Math.max(1, prev - 1))}
           >
             Previous
           </Button>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-charcoal">
             Page {history.pagination.page} / {history.pagination.totalPages || 1}
           </span>
           <Button
             type="button"
-            className="bg-gray-100 text-gray-700 hover:bg-gray-200"
+            variant="secondary"
             disabled={history.pagination.page >= history.pagination.totalPages}
             onClick={() => setHistoryPage((prev) => prev + 1)}
           >
@@ -412,15 +413,15 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-6 flex flex-wrap gap-3 border-b border-gray-200 pb-4">
+      <div className="mb-6 flex flex-wrap gap-3 border-b border-border-cream pb-4">
         <button
           type="button"
           onClick={() => setTab("analytics")}
           className={cn(
             "rounded-full px-4 py-2 text-sm font-medium transition",
             tab === "analytics"
-              ? "bg-gray-900 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              ? "bg-terracotta text-ivory shadow-[0_0_0_1px_#c96442]"
+              : "bg-warm-sand text-charcoal hover:brightness-[0.97]"
           )}
         >
           Analytics
@@ -431,8 +432,8 @@ export default function DashboardPage() {
           className={cn(
             "rounded-full px-4 py-2 text-sm font-medium transition",
             tab === "social"
-              ? "bg-gray-900 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              ? "bg-terracotta text-ivory shadow-[0_0_0_1px_#c96442]"
+              : "bg-warm-sand text-charcoal hover:brightness-[0.97]"
           )}
         >
           Social
@@ -443,8 +444,8 @@ export default function DashboardPage() {
           className={cn(
             "rounded-full px-4 py-2 text-sm font-medium transition",
             tab === "history"
-              ? "bg-gray-900 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              ? "bg-terracotta text-ivory shadow-[0_0_0_1px_#c96442]"
+              : "bg-warm-sand text-charcoal hover:brightness-[0.97]"
           )}
         >
           History

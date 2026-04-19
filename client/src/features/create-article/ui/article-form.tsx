@@ -466,7 +466,7 @@ export default function ArticleForm({
     >
       {/* Draft restore banner */}
       {draftBanner ? (
-        <div className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800">
+        <div className="flex items-center justify-between rounded-2xl border border-terracotta/35 bg-parchment px-5 py-3 text-sm text-charcoal">
           <span>
             You have an unsaved draft from{" "}
             <strong>{formatDraftTime(draftBanner.savedAt)}</strong>. Restore it?
@@ -475,14 +475,14 @@ export default function ArticleForm({
             <button
               type="button"
               onClick={handleRestoreDraft}
-              className="rounded-lg bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700"
+              className="rounded-lg bg-terracotta px-3 py-1 text-xs font-medium text-ivory shadow-[0_0_0_1px_#c96442] hover:brightness-[0.95]"
             >
               Restore
             </button>
             <button
               type="button"
               onClick={handleDiscardDraft}
-              className="rounded-lg border border-amber-300 px-3 py-1 text-xs font-medium hover:bg-amber-100"
+              className="rounded-lg border border-border-warm bg-ivory px-3 py-1 text-xs font-medium text-charcoal hover:bg-warm-sand/80"
             >
               Discard
             </button>
@@ -490,8 +490,8 @@ export default function ArticleForm({
         </div>
       ) : null}
 
-      <div className="rounded-3xl border border-gray-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-gray-200 px-6 py-5 md:flex-row md:items-center md:justify-between">
+      <div className="rounded-3xl border border-border-cream bg-ivory shadow-whisper">
+        <div className="flex flex-col gap-4 border-b border-border-cream px-6 py-5 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap items-center gap-3">
             <ImageUploadField
               label="Add a cover image"
@@ -517,7 +517,7 @@ export default function ArticleForm({
               type="button"
               onClick={() => setTab("edit")}
               className={`text-base font-medium cursor-pointer ${
-                tab === "edit" ? "text-gray-900" : "text-gray-500"
+                tab === "edit" ? "text-ink" : "text-stone"
               }`}
             >
               Edit
@@ -526,7 +526,7 @@ export default function ArticleForm({
               type="button"
               onClick={() => setTab("preview")}
               className={`text-base font-medium cursor-pointer ${
-                tab === "preview" ? "text-gray-900" : "text-gray-500"
+                tab === "preview" ? "text-ink" : "text-stone"
               }`}
             >
               Preview
@@ -538,22 +538,22 @@ export default function ArticleForm({
           <input
             type="text"
             placeholder="New post title here..."
-            className="w-full border-none bg-transparent text-6xl font-bold leading-tight text-gray-700 outline-none placeholder:text-gray-400"
+            className="w-full border-none bg-transparent font-editorial text-6xl font-medium leading-tight text-charcoal outline-none placeholder:text-warm-silver"
             {...register("title")}
           />
           {errors.title?.message ? (
-            <p className="mt-2 text-sm text-red-500">{errors.title.message}</p>
+            <p className="mt-2 text-sm text-error">{errors.title.message}</p>
           ) : null}
 
           <div className="mt-4">
             <input
               type="text"
               placeholder="Write a short summary..."
-              className="w-full border-none bg-transparent text-2xl leading-relaxed text-gray-600 outline-none placeholder:text-gray-400"
+              className="w-full border-none bg-transparent text-2xl leading-relaxed text-charcoal outline-none placeholder:text-warm-silver"
               {...register("summary")}
             />
             {errors.summary?.message ? (
-              <p className="mt-2 text-sm text-red-500">{errors.summary.message}</p>
+              <p className="mt-2 text-sm text-error">{errors.summary.message}</p>
             ) : null}
           </div>
 
@@ -562,12 +562,13 @@ export default function ArticleForm({
               <input
                 type="text"
                 placeholder="Add tags, separated by commas..."
-                className="min-w-0 flex-1 border-none bg-transparent text-lg text-gray-500 outline-none placeholder:text-gray-400"
+                className="min-w-0 flex-1 border-none bg-transparent text-lg text-stone outline-none placeholder:text-warm-silver"
                 {...register("tags")}
               />
               <Button
                 type="button"
-                className="shrink-0 border border-gray-200 bg-white !text-gray-700 hover:!bg-gray-50"
+                variant="outline"
+                className="shrink-0 !bg-ivory hover:!bg-parchment"
                 disabled={loading || suggestLoading}
                 onClick={() => void handleSuggestCommunityTags()}
               >
@@ -575,10 +576,10 @@ export default function ArticleForm({
               </Button>
             </div>
             {suggestHint ? (
-              <p className="mt-2 text-sm text-gray-600">{suggestHint}</p>
+              <p className="mt-2 text-sm text-charcoal">{suggestHint}</p>
             ) : null}
             {errors.tags?.message ? (
-              <p className="mt-2 text-sm text-red-500">{errors.tags.message}</p>
+              <p className="mt-2 text-sm text-error">{errors.tags.message}</p>
             ) : null}
           </div>
         </div>
@@ -588,16 +589,16 @@ export default function ArticleForm({
 
           {/* Image insert panel */}
           {imageInputOpen ? (
-            <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
+            <div className="border-b border-border-cream bg-parchment px-4 py-3">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-gray-500">Insert image</span>
+                <span className="text-xs font-medium text-stone">Insert image</span>
                 <input
                   ref={imageFileRef}
                   type="file"
                   accept="image/*"
                   disabled={imageUploading}
                   onChange={(e) => handleUploadImageFile(e.target.files?.[0] ?? null)}
-                  className="flex-1 min-w-[200px] rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-600 file:mr-3 file:rounded file:border-0 file:bg-gray-100 file:px-2 file:py-1 file:text-xs file:font-medium file:text-gray-700 disabled:opacity-60"
+                  className="min-w-[200px] flex-1 rounded-lg border border-border-cream bg-ivory px-3 py-1.5 text-sm text-charcoal file:mr-3 file:rounded file:border-0 file:bg-warm-sand file:px-2 file:py-1 file:text-xs file:font-medium file:text-charcoal disabled:opacity-60"
                 />
                 <input
                   type="text"
@@ -605,15 +606,15 @@ export default function ArticleForm({
                   value={imageAlt}
                   onChange={(e) => setImageAlt(e.target.value)}
                   disabled={imageUploading}
-                  className="w-44 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-gray-400 disabled:opacity-60"
+                  className="w-44 rounded-lg border border-border-warm bg-ivory px-3 py-1.5 text-sm text-ink outline-none focus:border-focus focus:ring-2 focus:ring-focus/25 disabled:opacity-60"
                 />
                 {imageUploading ? (
-                  <span className="text-xs text-gray-400">Uploading...</span>
+                  <span className="text-xs text-warm-silver">Uploading...</span>
                 ) : null}
                 <button
                   type="button"
                   onClick={() => setImageInputOpen(false)}
-                  className="rounded-md px-2 py-1 text-xs text-gray-400 hover:bg-gray-200"
+                  className="rounded-md px-2 py-1 text-xs text-warm-silver hover:bg-warm-sand/80"
                 >
                   ✕
                 </button>
@@ -622,11 +623,11 @@ export default function ArticleForm({
           ) : null}
 
           {tab === "edit" ? (
-            <div className="min-h-[420px] rounded-b-3xl bg-white px-6 py-6">
+            <div className="min-h-[420px] rounded-b-3xl bg-ivory px-6 py-6">
               <textarea
                 rows={18}
                 placeholder="Write your post content here..."
-                className="h-[420px] w-full resize-none border-none bg-transparent font-mono text-3xl leading-10 text-gray-700 outline-none placeholder:text-gray-400"
+                className="h-[420px] w-full resize-none border-none bg-transparent font-mono text-3xl leading-10 text-charcoal outline-none placeholder:text-warm-silver"
                 ref={(el) => {
                   contentRef(el);
                   textareaRef.current = el;
@@ -634,7 +635,7 @@ export default function ArticleForm({
                 {...contentRegister}
               />
               {errors.content?.message ? (
-                <p className="mt-2 text-sm text-red-500">{errors.content.message}</p>
+                <p className="mt-2 text-sm text-error">{errors.content.message}</p>
               ) : null}
             </div>
           ) : (
@@ -657,7 +658,7 @@ export default function ArticleForm({
           disabled={!canUndo}
           title="上一步"
           aria-label="上一步"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-700 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-transparent"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-charcoal transition hover:bg-warm-sand/80 hover:text-ink disabled:cursor-not-allowed disabled:text-warm-silver disabled:hover:bg-transparent"
         >
           <Undo2 className="h-5 w-5" aria-hidden />
         </button>
@@ -667,13 +668,13 @@ export default function ArticleForm({
           disabled={!canRedo}
           title="下一步"
           aria-label="下一步"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-700 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-transparent"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-charcoal transition hover:bg-warm-sand/80 hover:text-ink disabled:cursor-not-allowed disabled:text-warm-silver disabled:hover:bg-transparent"
         >
           <Redo2 className="h-5 w-5" aria-hidden />
         </button>
 
         {draftStatus ? (
-          <span className="ml-auto text-sm text-gray-400">{draftStatus}</span>
+          <span className="ml-auto text-sm text-warm-silver">{draftStatus}</span>
         ) : null}
       </div>
     </form>

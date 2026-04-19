@@ -61,15 +61,15 @@ export default function SettingsForm({
             />
 
             <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700">Bio</label>
+                <label className="text-sm font-medium text-charcoal">Bio</label>
                 <textarea
                     rows={4}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                    className="w-full rounded-lg border border-border-warm bg-parchment px-3 py-2.5 text-sm text-ink outline-none transition placeholder:text-warm-silver focus:border-focus focus:ring-2 focus:ring-focus/25"
                     placeholder="Tell us about yourself"
                     {...register("bio")}
                 />
                 {errors.bio?.message ? (
-                    <span className="text-sm text-red-500">{errors.bio.message}</span>
+                    <span className="text-sm text-error">{errors.bio.message}</span>
                 ) : null}
             </div>
 

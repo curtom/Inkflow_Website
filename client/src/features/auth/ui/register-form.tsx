@@ -59,7 +59,7 @@ export default function RegisterForm() {
     };
 
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-border-cream bg-ivory p-6 shadow-whisper">
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
                 <Input
                     label="Username"
@@ -86,7 +86,7 @@ export default function RegisterForm() {
                 />
 
                 {submitError && (
-                    <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                    <div className="rounded-lg border border-error/25 bg-error/10 px-3 py-2 text-sm text-error">
                         {submitError}
                     </div>
                 )}
@@ -95,9 +95,9 @@ export default function RegisterForm() {
                 </Button>
             </form>
 
-            <p className="mt-4 text-center text-sm text-gray-600">
+            <p className="mt-4 text-center text-sm text-charcoal">
                 Already have an account?{" "}
-                <Link to="/login" className="font-medium text-green-600 hover:underline">
+                <Link to="/login" className="font-medium text-terracotta underline decoration-terracotta/40 underline-offset-2 hover:text-coral">
                     Sign in
                 </Link>
             </p>

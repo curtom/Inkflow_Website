@@ -40,7 +40,7 @@ export default function LoginForm() {
     };
 
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-border-cream bg-ivory p-6 shadow-whisper">
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
                 <Input
                    label="Email"
@@ -61,9 +61,9 @@ export default function LoginForm() {
                 </Button>
             </form>
 
-            <p className="mt-4 text-center text-sm text-gray-600">
+            <p className="mt-4 text-center text-sm text-charcoal">
                 Don&apos;t have an account?{" "}
-                <Link to="/register" className={"font-medium text-green-600 hover:underline"}>
+                <Link to="/register" className="font-medium text-terracotta underline decoration-terracotta/40 underline-offset-2 hover:text-coral">
                     Register
                 </Link>
             </p>

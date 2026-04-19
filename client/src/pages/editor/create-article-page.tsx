@@ -42,7 +42,7 @@ export default function CreateArticlePage() {
 
     return (
         <div className="mx-auto max-w-6xl px-4 py-6">
-            <h1 className="mb-4 text-3xl font-bold text-gray-900">Write a new article</h1>
+            <h1 className="mb-4 text-3xl font-medium text-ink">Write a new article</h1>
                 <ArticleForm
                     submitText="Publish"
                     loading={createMutation.isPending}
