@@ -13,38 +13,43 @@ import {
 export default function CommunityPage() {
   const { communityId = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-
-  if (!isCommunityId(communityId)) {
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-red-500">Community not found.</p>
-      </div>
-    );
-  }
-
-  const community = COMMUNITY_CONFIG_MAP[communityId];
+  const isValidCommunity = isCommunityId(communityId);
+  const community = isValidCommunity ? COMMUNITY_CONFIG_MAP[communityId] : null;
 
   const page = Number(searchParams.get("page") || "1");
   const groupKeyFromQuery = searchParams.get("group") || "";
-  const activeGroup = community.tabs.some((tab) => tab.key === groupKeyFromQuery)
+  const activeGroup =
+    community?.tabs.some((tab) => tab.key === groupKeyFromQuery)
     ? groupKeyFromQuery
-    : community.tabs[0]?.key ?? "";
-  const activeTab = community.tabs.find((tab) => tab.key === activeGroup);
+    : community?.tabs[0]?.key ?? "";
+  const activeTab = community?.tabs.find((tab) => tab.key === activeGroup);
   const activeTag = activeTab?.tag;
   const limit = 12;
 
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.articles.list(page, limit, activeTag),
     queryFn: () => getArticlesRequest(page, limit, activeTag),
+    enabled: isValidCommunity,
   });
 
   const articles = data?.articles ?? [];
   const pagination = data?.pagination;
 
   const pageTitle = useMemo(() => {
+    if (!community) {
+      return "";
+    }
     const activeGroupLabel = activeTab?.label ?? activeGroup;
     return `${community.title} · ${activeGroupLabel}`;
   }, [community, activeGroup, activeTab]);
+
+  if (!community) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        <p className="text-red-500">Community not found.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-8xl px-4 py-10">

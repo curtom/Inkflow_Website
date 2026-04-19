@@ -45,4 +45,7 @@ export const ENDPOINTS = {
         social: "/dashboard/social",
         history: "/dashboard/history",
       },
+      community: {
+        suggestTags: "/community/suggest-tags",
+      },
 };

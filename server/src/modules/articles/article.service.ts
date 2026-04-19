@@ -2,6 +2,7 @@ import {Article} from "./article.model";
 import {generateSlug} from "../../common/utils/slug";
 import {AppError} from "../../common/utils/app-error";
 import { ArticleView } from "../views/article-view.model";
+import { mergeCommunityTagsFromEmbedding } from "../community/community-classifier.service";
 
 
 type ArticleAuthor = {
@@ -139,13 +140,27 @@ export async function createArticle(userId: string, payload: CreateArticleInput)
     const baseSlug = generateSlug(payload.title);
     const slug = await ensureUniqueSlug(baseSlug);
 
+    const userTags = payload.tags ?? [];
+    let tags = userTags;
+    try {
+        tags = await mergeCommunityTagsFromEmbedding({
+            title: payload.title,
+            summary: payload.summary,
+            content: payload.content,
+            existingTags: userTags,
+        });
+    } catch (err) {
+        console.warn("[article.service] community tags merge on create skipped:", err);
+        tags = userTags;
+    }
+
     const article = await Article.create({
         title: payload.title,
         slug,
         summary: payload.summary,
         content: payload.content,
         coverImage: payload.coverImage ?? "",
-        tags: payload.tags ?? [],
+        tags,
         author: userId,
     });
 
@@ -258,6 +273,32 @@ export async function updateArticle(
         throw new AppError("Forbidden: You can only edit your own article", 403);
     }
 
+    const nextTitle = payload.title ?? article.title;
+    const nextSummary = payload.summary ?? article.summary;
+    const nextContent = payload.content ?? article.content;
+    const baseTags =
+        payload.tags !== undefined ? payload.tags : [...article.tags];
+
+    const shouldReclassify =
+        payload.title !== undefined ||
+        payload.summary !== undefined ||
+        payload.content !== undefined;
+
+    let finalTags = baseTags;
+    if (shouldReclassify) {
+        try {
+            finalTags = await mergeCommunityTagsFromEmbedding({
+                title: nextTitle,
+                summary: nextSummary,
+                content: nextContent,
+                existingTags: baseTags,
+            });
+        } catch (err) {
+            console.warn("[article.service] community tags merge on update skipped:", err);
+            finalTags = baseTags;
+        }
+    }
+
     if (payload.title && payload.title !== article.title) {
         const baseSlug = generateSlug(payload.title);
         const nextSlug = await ensureUniqueSlug(baseSlug, String(article._id));
@@ -277,9 +318,7 @@ export async function updateArticle(
         article.coverImage = payload.coverImage;
     }
 
-    if (payload.tags !== undefined) {
-        article.tags = payload.tags;
-    }
+    article.tags = finalTags;
 
     await article.save();
 

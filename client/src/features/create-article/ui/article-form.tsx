@@ -18,6 +18,7 @@ import {
   formatDraftTime,
   type DraftData,
 } from "@/features/create-article/lib/draft";
+import { suggestCommunityTagsRequest } from "@/features/community/api/community-api";
 
 type ArticleFormProps = {
   defaultValues?: Partial<ArticleFormValues>;
@@ -31,6 +32,21 @@ type EditorTab = "edit" | "preview";
 
 function normalizeTagText(value?: string) {
   return value ?? "";
+}
+
+function splitTagsInput(tags: string) {
+  return tags
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
+function mergeTagSuggestionLine(current: string, newTags: string[]) {
+  const set = new Set(splitTagsInput(current));
+  for (const t of newTags) {
+    set.add(t);
+  }
+  return Array.from(set).join(", ");
 }
 
 export default function ArticleForm({
@@ -52,6 +68,8 @@ export default function ArticleForm({
   const [imageInputOpen, setImageInputOpen] = useState(false);
   const [imageAlt, setImageAlt] = useState("");
   const [imageUploading, setImageUploading] = useState(false);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [suggestHint, setSuggestHint] = useState("");
   const imageCursorRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
   const imageFileRef = useRef<HTMLInputElement | null>(null);
 
@@ -112,6 +130,45 @@ export default function ArticleForm({
   const content = watch("content");
   const coverImage = watch("coverImage");
   const tags = watch("tags");
+
+  const handleSuggestCommunityTags = async () => {
+    const t = getValues("title") ?? "";
+    const s = getValues("summary") ?? "";
+    const c = getValues("content") ?? "";
+    const tagLine = getValues("tags") ?? "";
+    if (!t.trim() || !s.trim() || !c.trim()) {
+      setSuggestHint("Add title, summary, and content first.");
+      return;
+    }
+    setSuggestLoading(true);
+    setSuggestHint("");
+    try {
+      const result = await suggestCommunityTagsRequest({
+        title: t,
+        summary: s,
+        content: c,
+        tags: splitTagsInput(tagLine),
+      });
+      if (result.disabledReason === "missing_api_key") {
+        setSuggestHint(
+          "Server has no DASHSCOPE_API_KEY or OPENAI_API_KEY; add one in server .env."
+        );
+        return;
+      }
+      if (result.matchedTags.length === 0) {
+        setSuggestHint(
+          `No community group met the similarity threshold (${result.threshold}).`
+        );
+        return;
+      }
+      setValue("tags", mergeTagSuggestionLine(tagLine, result.matchedTags));
+      setSuggestHint(`Added tags: ${result.matchedTags.join(", ")}`);
+    } catch {
+      setSuggestHint("Could not load suggestions. Try again.");
+    } finally {
+      setSuggestLoading(false);
+    }
+  };
 
   // Debounced auto-save
   useEffect(() => {
@@ -394,12 +451,25 @@ export default function ArticleForm({
           </div>
 
           <div className="mt-5">
-            <input
-              type="text"
-              placeholder="Add tags, separated by commas..."
-              className="w-full border-none bg-transparent text-lg text-gray-500 outline-none placeholder:text-gray-400"
-              {...register("tags")}
-            />
+            <div className="flex flex-wrap items-end gap-3">
+              <input
+                type="text"
+                placeholder="Add tags, separated by commas..."
+                className="min-w-0 flex-1 border-none bg-transparent text-lg text-gray-500 outline-none placeholder:text-gray-400"
+                {...register("tags")}
+              />
+              <Button
+                type="button"
+                className="shrink-0 border border-gray-200 bg-white !text-gray-700 hover:!bg-gray-50"
+                disabled={loading || suggestLoading}
+                onClick={() => void handleSuggestCommunityTags()}
+              >
+                {suggestLoading ? "Suggesting…" : "Suggest community tags"}
+              </Button>
+            </div>
+            {suggestHint ? (
+              <p className="mt-2 text-sm text-gray-600">{suggestHint}</p>
+            ) : null}
             {errors.tags?.message ? (
               <p className="mt-2 text-sm text-red-500">{errors.tags.message}</p>
             ) : null}
