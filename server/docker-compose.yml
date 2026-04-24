@@ -11,7 +11,7 @@ services:
       - mongo
 
   mongo:
-    image: mongo:7
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/mongo:7
     container_name: inkflow-mongo
     restart: always
     volumes:

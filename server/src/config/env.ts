@@ -20,12 +20,26 @@ function getOptionalEnv(key: string, defaultValue?: string) {
     return value;
 }
 
+/** CLIENT_URL 支持逗号分隔多个前端地址（CORS origin 列表） */
+function parseClientOrigins(raw: string): string[] {
+    const origins = raw
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    if (origins.length === 0) {
+        throw new Error("CLIENT_URL must contain at least one URL");
+    }
+    return origins;
+}
+
 export const env = {
     port: Number(getEnv("PORT", "5000")),
     mongoUri: getEnv("MONGO_URI"),
     jwtSecret: getEnv("JWT_SECRET"),
     jwtExpiresIn: getEnv("JWT_EXPIRES_IN", "7d"),
-    clientUrl: getEnv("CLIENT_URL", "http://localhost:5173"),
+    clientOrigins: parseClientOrigins(
+        getEnv("CLIENT_URL", "http://localhost:5173")
+    ),
     nodeEnv: getEnv("NODE_ENV", "development"),
     /** 国内兼容模式：`https://dashscope.aliyuncs.com/compatible-mode/v1` */
     dashscopeApiKey: getOptionalEnv("DASHSCOPE_API_KEY"),
