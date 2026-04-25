@@ -9,6 +9,8 @@ type ArticleFeedInfiniteProps = {
   limit: number;
   compact?: boolean;
   columns?: 1 | 2;
+  /** When set, infinite-scroll sentinel uses this element as the intersection root (e.g. a local overflow container). */
+  scrollRoot?: HTMLElement | null;
 };
 
 export default function ArticleFeedInfinite({
@@ -16,6 +18,7 @@ export default function ArticleFeedInfinite({
   limit,
   compact = false,
   columns = 1,
+  scrollRoot = null,
 }: ArticleFeedInfiniteProps) {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -46,12 +49,12 @@ export default function ArticleFeedInfinite({
           void fetchNextPage();
         }
       },
-      { root: null, rootMargin: "240px 0px", threshold: 0 }
+      { root: scrollRoot, rootMargin: "240px 0px", threshold: 0 }
     );
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, scrollRoot]);
 
   if (isLoading) {
     return <p className="text-olive">加载中…</p>;

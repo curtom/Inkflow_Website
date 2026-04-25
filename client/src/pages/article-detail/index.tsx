@@ -16,7 +16,7 @@ import { useAppSelector } from "@/shared/hooks/redux";
 import DeleteArticleButton from "@/features/delete-article/ui/delete-article-button";
 import CommentList from "@/widgets/comment-list";
 import AddCommentForm from "@/features/add-comment/ui/add-comment-form";
-import { Heart, Bookmark, HashIcon } from "lucide-react";
+import { Heart, Bookmark, HashIcon, MessageCircle } from "lucide-react";
 
 export default function ArticleDetailPage() {
   const { slug = "" } = useParams();
@@ -55,6 +55,7 @@ export default function ArticleDetailPage() {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.articles.comments(slug),
       });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.articles.detail(slug) });
     },
   });
 
@@ -64,6 +65,7 @@ export default function ArticleDetailPage() {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.articles.comments(slug),
       });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.articles.detail(slug) });
     },
   });
 
@@ -96,8 +98,79 @@ export default function ArticleDetailPage() {
     );
   }
 
+  const scrollToComments = () => {
+    document.getElementById("article-comments")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
+    <div className="mx-auto w-full max-w-4xl px-4 py-10">
+      <div
+        className="hidden md:fixed md:left-[max(1rem,calc((100vw-min(100vw,56rem))/2+0.5rem))] md:top-36 md:z-30 md:flex md:w-10 md:flex-col md:items-center md:gap-4 md:py-1"
+        role="group"
+        aria-label="文章互动"
+      >
+            <button
+              type="button"
+              title="赞"
+              disabled={!isAuthenticated || likeMutation.isPending}
+              onClick={async () => {
+                if (!isAuthenticated) {
+                  window.alert("Please log in to like articles.");
+                  return;
+                }
+                await likeMutation.mutateAsync();
+              }}
+              className={`flex w-full max-w-10 flex-col items-center gap-0.5 rounded-2xl border py-2 text-sm font-medium transition disabled:opacity-60 ${
+                article.isLiked
+                  ? "border-terracotta/40 bg-parchment text-terracotta shadow-[0_0_0_1px_#c96442]"
+                  : "border-border-cream bg-ivory text-charcoal shadow-[0_0_0_1px_#f0eee6] hover:border-terracotta/30 hover:bg-parchment hover:text-terracotta"
+              }`}
+            >
+              <Heart
+                className="h-5 w-5"
+                fill={article.isLiked ? "currentColor" : "none"}
+                strokeWidth={article.isLiked ? 0 : 2}
+              />
+              <span className="text-xs tabular-nums leading-none">{article.likesCount}</span>
+            </button>
+
+            <button
+              type="button"
+              title="收藏"
+              disabled={!isAuthenticated || favoriteMutation.isPending}
+              onClick={async () => {
+                if (!isAuthenticated) {
+                  window.alert("Please log in to save articles.");
+                  return;
+                }
+                await favoriteMutation.mutateAsync();
+              }}
+              className={`flex w-full max-w-10 flex-col items-center gap-0.5 rounded-2xl border py-2 text-sm font-medium transition disabled:opacity-60 ${
+                article.isFavorited
+                  ? "border-coral/45 bg-parchment text-coral shadow-[0_0_0_1px_#d97757]"
+                  : "border-border-cream bg-ivory text-charcoal shadow-[0_0_0_1px_#f0eee6] hover:border-coral/35 hover:bg-parchment hover:text-coral"
+              }`}
+            >
+              <Bookmark
+                className="h-5 w-5"
+                fill={article.isFavorited ? "currentColor" : "none"}
+                strokeWidth={article.isFavorited ? 0 : 2}
+              />
+              <span className="text-xs tabular-nums leading-none">{article.favoritesCount}</span>
+            </button>
+
+            <button
+              type="button"
+              title="跳转到评论区"
+              onClick={scrollToComments}
+              className="flex w-full max-w-10 flex-col items-center gap-0.5 rounded-2xl border border-border-cream bg-ivory py-2 text-sm font-medium text-charcoal shadow-[0_0_0_1px_#f0eee6] transition hover:border-terracotta/30 hover:bg-parchment hover:text-terracotta"
+            >
+              <MessageCircle className="h-5 w-5" strokeWidth={2} />
+              <span className="text-xs tabular-nums leading-none">{article.commentsCount}</span>
+            </button>
+      </div>
+
+        <div className="min-w-0 max-w-3xl md:max-w-none md:pl-5">
       <article className="overflow-hidden rounded-[32px] border border-border-cream bg-ivory shadow-whisper">
         <div className="px-8 pb-6 pt-8">
           <div className="flex items-center gap-3">
@@ -225,7 +298,7 @@ export default function ArticleDetailPage() {
         </div>
       </article>
 
-      <section className="mt-10">
+      <section id="article-comments" className="mt-10 scroll-mt-24">
         <h2 className="font-editorial mb-4 text-2xl font-medium text-ink">
           Comments ({comments.length})
         </h2>
@@ -269,6 +342,7 @@ export default function ArticleDetailPage() {
           />
         ) : null}
       </section>
+        </div>
     </div>
   );
 }
