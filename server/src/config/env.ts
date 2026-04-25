@@ -1,6 +1,13 @@
 import dotenv from "dotenv";
 
-dotenv.config();
+const nodeEnv = process.env.NODE_ENV ?? "development";
+
+if (nodeEnv === "production") {
+    dotenv.config({ path: ".env" });
+} else {
+    dotenv.config({ path: ".env" });
+    dotenv.config({ path: ".env.local", override: true });
+}
 
 function getEnv(key: string, defaultValue?: string) {
     const value = process.env[key] ?? defaultValue;

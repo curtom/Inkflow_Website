@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";;
+/** 开发环境走 Vite 代理（同源 /api → localhost:5000），避免与后端 CORS 不一致 */
+const baseURL =
+    import.meta.env.VITE_API_BASE_URL ||
+    (import.meta.env.DEV ? "/api/v1" : "http://localhost:5000/api/v1");
 
 export const api = axios.create({
     baseURL,
