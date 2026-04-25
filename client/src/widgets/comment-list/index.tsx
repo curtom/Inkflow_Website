@@ -101,7 +101,7 @@ export default function CommentList({
     }
   };
 
-  if (!comments.length) {
+  if (!comments || comments.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border-warm bg-ivory p-6 text-center text-stone shadow-[0_0_0_1px_#e8e6dc]">
         暂无评论
@@ -217,7 +217,8 @@ function CommentBlock({
   const isPinned = pinnedCommentId === comment.id;
   const canAuthorPin =
     level === 0 && isArticleAuthor && onSetPinned;
-  const hasReplies = comment.replies.length > 0;
+  const replies = comment.replies ?? [];
+  const hasReplies = replies.length > 0;
   const isOpen = expanded[comment.id] ?? false;
 
   const publishReply = async (e: FormEvent) => {
@@ -382,7 +383,7 @@ function CommentBlock({
               aria-label="折叠本层所有回复"
             />
             <div className="min-w-0 flex-1 space-y-4 border-l border-stone-200/90 pl-3">
-              {comment.replies.map((r) => (
+              {replies.map((r) => (
                 <CommentBlock
                   key={r.id}
                   comment={r}

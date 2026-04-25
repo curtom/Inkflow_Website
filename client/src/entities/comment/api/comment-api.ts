@@ -3,13 +3,40 @@ import { ENDPOINTS } from "@/shared/api/endpoints";
 import type {
   CommentCreateResponse,
   CommentListResponse,
+  CommentNode,
   CommentSort,
 } from "../types/comment";
 
+function normalizeCommentNode(node: CommentNode): CommentNode {
+  const repliesRaw = node.replies;
+  const children = Array.isArray(repliesRaw) ? repliesRaw : [];
+  return {
+    ...node,
+    likesCount: node.likesCount ?? 0,
+    isLiked: node.isLiked ?? false,
+    replyCount: node.replyCount ?? 0,
+    replies: children.map((c) => normalizeCommentNode(c)),
+  };
+}
+
 export async function getCommentsByArticleRequest(slug: string, sort: CommentSort = "newest") {
-  return (await api.get(ENDPOINTS.comments.list(slug), {
+  const res = (await api.get(ENDPOINTS.comments.list(slug), {
     params: { sort },
   })) as unknown as CommentListResponse;
+
+  const d = res.data;
+  const rawComments = d?.comments;
+  const list = Array.isArray(rawComments) ? rawComments : [];
+
+  return {
+    ...res,
+    data: {
+      ...(d ?? {}),
+      comments: list.map((c) => normalizeCommentNode(c as CommentNode)),
+      total: d?.total ?? 0,
+      pinnedCommentId: d?.pinnedCommentId ?? null,
+    },
+  };
 }
 
 export async function createCommentRequest(

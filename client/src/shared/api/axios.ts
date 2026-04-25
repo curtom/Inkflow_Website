@@ -1,9 +1,13 @@
 import axios from "axios";
 
-/** 开发环境走 Vite 代理（同源 /api → localhost:5000），避免与后端 CORS 不一致 */
+/**
+ * - 开发：Vite 代理 `/api` → 本地后端
+ * - 生产：未配置 `VITE_API_BASE_URL` 时用同源相对路径 `/api/v1`（需网关反代到后端）。
+ *   若 API 在其它域名，必须在构建时设置 `VITE_API_BASE_URL`（勿使用 localhost）。
+ */
 const baseURL =
-    import.meta.env.VITE_API_BASE_URL ||
-    (import.meta.env.DEV ? "/api/v1" : "http://localhost:5000/api/v1");
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? "/api/v1" : "/api/v1");
 
 export const api = axios.create({
     baseURL,

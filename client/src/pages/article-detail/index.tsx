@@ -43,7 +43,7 @@ export default function ArticleDetailPage() {
   });
 
   const article = data?.article;
-  const commentTree = commentsQuery.data?.data.comments ?? [];
+  const commentTree = commentsQuery.data?.data?.comments ?? [];
   const commentTotal = commentsQuery.data?.data.total ?? article?.commentsCount ?? 0;
   const pinnedCommentId = commentsQuery.data?.data.pinnedCommentId ?? null;
   const isAuthor = currentUser?.id && article?.author.id === currentUser.id;
@@ -224,9 +224,9 @@ export default function ArticleDetailPage() {
             {article.title}
           </h1>
 
-          {article.tags.length > 0 ? (
+          {(article.tags ?? []).length > 0 ? (
             <div className="mt-4 flex flex-wrap gap-2">
-              {article.tags.map((tag: string) => (
+              {(article.tags ?? []).map((tag: string) => (
                 <span
                   key={tag}
                   className="flex items-center gap-1.5 rounded-full bg-warm-sand px-2.5 py-1 text-sm font-medium text-charcoal shadow-[0_0_0_1px_#d1cfc5]"

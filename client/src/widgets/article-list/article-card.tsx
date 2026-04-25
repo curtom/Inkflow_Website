@@ -115,29 +115,37 @@ export default function ArticleCard({ article, compact = false, profilePin }: Pr
           ) : null}
         </div>
 
-        {article.tags.length > 0 ? (
-          <div className={cn("mt-4 flex flex-wrap gap-2", compact ? "max-h-16 overflow-hidden" : "")}>
-            {article.tags.slice(0, compact ? 3 : article.tags.length).map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  navigate(`/?tag=${encodeURIComponent(tag)}`);
-                }}
-                className={cn(
-                  "flex cursor-pointer items-center gap-1.5 rounded-full bg-warm-sand text-charcoal transition",
-                  "shadow-[0_0_0_1px_#d1cfc5] hover:brightness-95",
-                  compact ? "px-2.5 py-1 text-xs" : "px-3 py-1 text-sm"
-                )}
-              >
-                <HashIcon className={compact ? "h-4 w-4" : "h-5 w-5"} />
-                {tag}
-              </button>
-            ))}
-          </div>
-        ) : null}
+        {(() => {
+          const tags = article.tags ?? [];
+          if (tags.length === 0) {
+            return null;
+          }
+          return (
+            <div
+              className={cn("mt-4 flex flex-wrap gap-2", compact ? "max-h-16 overflow-hidden" : "")}
+            >
+              {tags.slice(0, compact ? 3 : tags.length).map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navigate(`/?tag=${encodeURIComponent(tag)}`);
+                  }}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-1.5 rounded-full bg-warm-sand text-charcoal transition",
+                    "shadow-[0_0_0_1px_#d1cfc5] hover:brightness-95",
+                    compact ? "px-2.5 py-1 text-xs" : "px-3 py-1 text-sm"
+                  )}
+                >
+                  <HashIcon className={compact ? "h-4 w-4" : "h-5 w-5"} />
+                  {tag}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
 
         <ArticleReactionBar
           slug={article.slug}

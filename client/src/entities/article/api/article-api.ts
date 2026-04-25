@@ -7,6 +7,7 @@ import type {
     UpdateArticlePayload,
 } from "@/entities/article";
 import { ENDPOINTS } from "@/shared/api/endpoints";
+import { normalizeArticle } from "../lib/normalize-article";
 
 export async function getArticlesRequest(
     page = 1,
@@ -20,7 +21,18 @@ export async function getArticlesRequest(
         }
     )) as unknown as ApiResponse<ArticleListData>;
 
-    return response.data;
+    const list = response.data;
+    if (!list) {
+        return {
+            articles: [],
+            pagination: { page, limit, total: 0, totalPages: 0 },
+        };
+    }
+    const raw = list.articles ?? [];
+    return {
+        ...list,
+        articles: raw.map((a) => normalizeArticle(a)!).filter(Boolean),
+    };
 }
 
 export async function getArticleBySlugRequest(
@@ -30,7 +42,12 @@ export async function getArticleBySlugRequest(
         ENDPOINTS.articles.detail(slug)
     )) as unknown as ApiResponse<ArticleDetailData>;
 
-    return response.data;
+    const inner = response.data;
+    const article = normalizeArticle(inner.article);
+    if (!article) {
+        throw new Error("Invalid article payload");
+    }
+    return { article };
 }
 
 export async function createArticleRequest(
@@ -41,7 +58,12 @@ export async function createArticleRequest(
         payload
     )) as unknown as ApiResponse<ArticleDetailData>;
 
-    return response.data;
+    const inner = response.data;
+    const article = normalizeArticle(inner.article);
+    if (!article) {
+        throw new Error("Invalid article payload");
+    }
+    return { article };
 }
 
 export async function updateArticleRequest(
@@ -53,7 +75,12 @@ export async function updateArticleRequest(
         payload
     )) as unknown as ApiResponse<ArticleDetailData>;
 
-    return response.data;
+    const inner = response.data;
+    const article = normalizeArticle(inner.article);
+    if (!article) {
+        throw new Error("Invalid article payload");
+    }
+    return { article };
 }
 
 export async function deleteArticleRequest(
