@@ -1,4 +1,4 @@
-import { useParams, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   followUserRequest,
@@ -7,12 +7,14 @@ import {
   unfollowUserRequest,
   type PublicProfileArticlesSort,
 } from "@/features/profile/api/public-profile-api";
+import { setProfilePinnedArticleRequest } from "@/features/profile/api/profile-api";
 import { queryKeys } from "@/shared/api/query-keys";
 import ArticleList from "@/widgets/article-list";
 import Button from "@/shared/ui/button";
 import PostsPaginationBar from "@/shared/ui/posts-pagination-bar";
 import { useAppSelector } from "@/shared/hooks/redux";
 import { cn } from "@/shared/lib/cn";
+import { mergeProfileArticleList } from "@/shared/lib/merge-profile-articles";
 
 function parseSort(raw: string | null): PublicProfileArticlesSort {
   return raw === "likes" ? "likes" : "newest";
@@ -20,6 +22,8 @@ function parseSort(raw: string | null): PublicProfileArticlesSort {
 
 export default function PublicProfilePage() {
   const { username = "" } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const currentUser = useAppSelector((state) => state.auth.user);
@@ -54,6 +58,16 @@ export default function PublicProfilePage() {
     },
   });
 
+  const profilePinMutation = useMutation({
+    mutationFn: (articleId: string | null) => setProfilePinnedArticleRequest(articleId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["public-profile", "articles", username],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["profile", "my-articles"] });
+    },
+  });
+
   const unfollowMutation = useMutation({
     mutationFn: () => unfollowUserRequest(username),
     onSuccess: async () => {
@@ -68,7 +82,9 @@ export default function PublicProfilePage() {
   });
 
   const user = profileQuery.data?.data.user;
-  const articles = articlesQuery.data?.data.articles ?? [];
+  const rawArticles = articlesQuery.data?.data.articles ?? [];
+  const pinnedFromApi = articlesQuery.data?.data.pinnedArticle;
+  const articles = mergeProfileArticleList(page, pinnedFromApi ?? null, rawArticles);
   const pagination = articlesQuery.data?.data.pagination;
   const isSelf = currentUser?.username === username;
   const isMutating = followMutation.isPending || unfollowMutation.isPending;
@@ -129,11 +145,11 @@ export default function PublicProfilePage() {
           {!isSelf ? (
             <Button
               type="button"
-              disabled={!isAuthenticated || isMutating}
+              disabled={isMutating}
               loading={isMutating}
               onClick={async () => {
                 if (!isAuthenticated) {
-                  window.alert("Please login to follow users.");
+                  void navigate("/login", { state: { from: location } });
                   return;
                 }
 
@@ -186,7 +202,14 @@ export default function PublicProfilePage() {
           </div>
         </div>
 
-        <ArticleList articles={articles} />
+        <ArticleList
+          articles={articles}
+          showProfilePinControls={isSelf}
+          profilePinLoading={profilePinMutation.isPending}
+          onProfilePin={(articleId) => {
+            profilePinMutation.mutate(articleId);
+          }}
+        />
 
         {pagination && pagination.totalPages > 0 ? (
           <PostsPaginationBar

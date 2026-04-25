@@ -1,7 +1,10 @@
+import type { Types } from "mongoose";
 import { AppError } from "../../common/utils/app-error";
 import { Article } from "../articles/article.model";
 import { User } from "../users/user.model";
 import { Follow } from "../follows/follow.model";
+
+export type ProfileArticleSort = "newest" | "likes";
 
 
 function sanitizeUser(user: {
@@ -84,46 +87,130 @@ function sanitizeUser(user: {
     };
   }
 
+  /**
+   * Paginated list for a user's profile, with optional profile pin on page 1.
+   * Pinned post is returned separately on page 1 and excluded from `articles` to avoid duplicate.
+   */
+  export async function getAuthorArticlesListWithProfilePin(
+    user: { _id: Types.ObjectId; profilePinnedArticle?: Types.ObjectId | null },
+    page: number,
+    limit: number,
+    sort: ProfileArticleSort,
+    currentUserId?: string
+  ) {
+    const total = await Article.countDocuments({ author: user._id });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let pinnedDoc: any = null;
+    if (user.profilePinnedArticle) {
+      pinnedDoc = await Article.findOne({
+        _id: user.profilePinnedArticle,
+        author: user._id,
+      }).populate("author", "username email bio avatar");
+    }
+    if (user.profilePinnedArticle && !pinnedDoc) {
+      await User.updateOne({ _id: user._id }, { $unset: { profilePinnedArticle: 1 } });
+    }
+
+    const nePinned = pinnedDoc?._id ? { _id: { $ne: pinnedDoc._id } } : {};
+
+    const findFilter = { author: user._id, ...nePinned };
+
+    const nonPinnedSkip =
+      page <= 1
+        ? 0
+        : pinnedDoc
+          ? (page - 1) * limit - 1
+          : (page - 1) * limit;
+    const nonPinnedLimit =
+      page === 1 && pinnedDoc ? Math.max(0, limit - 1) : limit;
+
+    let listQuery = Article.find(findFilter);
+    if (sort === "likes") {
+      listQuery = listQuery.sort({ likesCount: -1, createdAt: -1 });
+    } else {
+      listQuery = listQuery.sort({ createdAt: -1 });
+    }
+    const rows = await listQuery
+      .skip(nonPinnedSkip)
+      .limit(nonPinnedLimit)
+      .populate("author", "username email bio avatar");
+
+    const profilePinnedArticleId = pinnedDoc ? String(pinnedDoc._id) : null;
+    const pinnedArticle =
+      page === 1 && pinnedDoc ? sanitizeArticle(pinnedDoc, currentUserId) : null;
+
+    return {
+      profilePinnedArticleId,
+      pinnedArticle,
+      articles: rows.map((a) => sanitizeArticle(a, currentUserId)),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: total === 0 ? 0 : Math.ceil(total / limit),
+      },
+    };
+  }
+
   export async function getPublicProfileArticles(
      username: string,
      page = 1,
      limit = 10,
      currentUserId?: string,
-     sort: "newest" | "likes" = "newest"
+     sort: ProfileArticleSort = "newest"
   ) {
-     const user = await User.findOne({ username});
+     const user = await User.findOne({ username });
 
-     if(!user) {
+     if (!user) {
         throw new AppError("User not found", 404);
      }
 
-     const skip = (page - 1) * limit;
-
-     const [articles, total, followMeta] = await Promise.all([
-        (sort === "likes"
-          ? Article.find({ author: user._id }).sort({ likesCount: -1, createdAt: -1 })
-          : Article.find({ author: user._id }).sort({ createdAt: -1 })
-        )
-        .skip(skip)
-        .limit(limit)
-        .populate("author", "username email bio avatar"),
-        Article.countDocuments({ author: user._id }),
+     const [list, followMeta] = await Promise.all([
+        getAuthorArticlesListWithProfilePin(
+          user,
+          page,
+          limit,
+          sort,
+          currentUserId
+        ),
         getFollowMeta(String(user._id), currentUserId),
-    ]);
+     ]);
 
     return {
         user: {
           ...sanitizeUser(user),
           ...followMeta,
         },
-        articles: articles.map((article) => sanitizeArticle(article, currentUserId)),
-        pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        },
+        profilePinnedArticleId: list.profilePinnedArticleId,
+        pinnedArticle: list.pinnedArticle,
+        articles: list.articles,
+        pagination: list.pagination,
     };
+  }
+
+  export async function setUserProfilePinnedArticle(
+    userId: string,
+    articleId: string | null
+  ) {
+    if (articleId === null) {
+      await User.updateOne({ _id: userId }, { $unset: { profilePinnedArticle: 1 } });
+      return { profilePinnedArticleId: null as string | null };
+    }
+
+    const article = await Article.findById(articleId);
+    if (!article) {
+      throw new AppError("Article not found", 404);
+    }
+    if (String(article.author) !== userId) {
+      throw new AppError("You can only pin your own post", 403);
+    }
+
+    await User.updateOne(
+      { _id: userId },
+      { $set: { profilePinnedArticle: article._id } }
+    );
+    return { profilePinnedArticleId: String(article._id) };
   }
 
   export async function followUserByUsername(currentUserId: string, username: string) {

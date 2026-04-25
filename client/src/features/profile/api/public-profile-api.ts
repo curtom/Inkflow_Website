@@ -32,6 +32,9 @@ type PublicProfileArticlesResponse = {
             followingCount: number;
             isFollowing: boolean;
         };
+        profilePinnedArticleId?: string | null;
+        /** Present on page 1 when a pin exists; the pinned post, listed separately from `articles`. */
+        pinnedArticle?: Article | null;
         articles: Article[];
         pagination: {
             page: number;

@@ -7,6 +7,7 @@ export const ENDPOINTS = {
     users: {
         me: "/users/me",
         updateMe: "/users/me",
+        profilePinnedArticle: "/users/me/profile-pinned-article",
     },
     profile: {
         myArticles: "/users/me/articles",
@@ -29,6 +30,9 @@ export const ENDPOINTS = {
         create: (slug: string) => `/articles/${slug}/comments`,
         delete: (slug: string, commentId: string) =>
           `/articles/${slug}/comments/${commentId}`,
+        like: (slug: string, commentId: string) =>
+          `/articles/${slug}/comments/${commentId}/like`,
+        pin: (slug: string) => `/articles/${slug}/comments/pin`,
       },
       reactions: {
         like: (slug: string) => `/articles/${slug}/reactions/like`,

@@ -1,4 +1,5 @@
 import {Article} from "./article.model";
+import { User } from "../users/user.model";
 import {generateSlug} from "../../common/utils/slug";
 import {AppError} from "../../common/utils/app-error";
 import { ArticleView } from "../views/article-view.model";
@@ -348,6 +349,10 @@ export async function deleteArticle(userId: string, slug: string) {
     }
 
     await Article.deleteOne({ _id: article._id });
+    await User.updateMany(
+        { profilePinnedArticle: article._id },
+        { $unset: { profilePinnedArticle: 1 } }
+    );
 
     return {
         deleted: true,

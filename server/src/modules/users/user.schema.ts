@@ -23,3 +23,15 @@ export const updateCurrentUserSchema = z.object({
     params: z.object({}).optional(),
     query: z.object({}).optional(),
 });
+
+const objectIdString = z
+  .string()
+  .regex(/^[a-f\d]{24}$/i, "Must be a valid id");
+
+export const profilePinnedArticleSchema = z.object({
+  body: z.object({
+    articleId: z.union([objectIdString, z.null()]),
+  }),
+  params: z.object({}).optional(),
+  query: z.object({}).optional(),
+});

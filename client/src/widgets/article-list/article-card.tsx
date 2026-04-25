@@ -1,15 +1,22 @@
 import { useNavigate } from "react-router";
 import type { Article } from "@/entities/article";
 import ArticleReactionBar from "@/features/reactions/ui/article-reaction-bar";
-import { HashIcon } from "lucide-react";
+import { HashIcon, Pin } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 
 type Props = {
   article: Article;
   compact?: boolean;
+  /** On own profile, pin / unpin in the post list. */
+  profilePin?: {
+    show: boolean;
+    isPinned: boolean;
+    onToggle: () => void;
+    busy?: boolean;
+  };
 };
 
-export default function ArticleCard({ article, compact = false }: Props) {
+export default function ArticleCard({ article, compact = false, profilePin }: Props) {
   const navigate = useNavigate();
 
   return (
@@ -62,7 +69,29 @@ export default function ArticleCard({ article, compact = false }: Props) {
             >
               {article.title}
             </p>
+            {article.isProfilePinned ? (
+              <span className="mt-1.5 inline-flex w-fit items-center gap-1 rounded-md bg-terracotta/10 px-2 py-0.5 text-xs font-medium text-terracotta">
+                <Pin className="h-3.5 w-3.5" aria-hidden />
+                主页置顶
+              </span>
+            ) : null}
           </div>
+          {profilePin?.show ? (
+            <div className="shrink-0 self-start pt-0.5" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                disabled={profilePin.busy}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  profilePin.onToggle();
+                }}
+                className="rounded-lg border border-border-cream bg-parchment/90 px-2.5 py-1.5 text-xs font-medium text-olive transition hover:border-terracotta/30 hover:text-terracotta disabled:opacity-50"
+              >
+                {profilePin.isPinned ? "取消主页置顶" : "主页置顶"}
+              </button>
+            </div>
+          ) : null}
         </div>
 
         <div className={cn("mt-4 flex items-start", compact ? "gap-4" : "gap-6")}>

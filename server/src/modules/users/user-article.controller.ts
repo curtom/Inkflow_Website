@@ -2,6 +2,11 @@ import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../common/utils/app-error";
 import { successResponse } from "../../common/utils/api-response";
 import { Article } from "../articles/article.model";
+import { User } from "../users/user.model";
+import {
+  getAuthorArticlesListWithProfilePin,
+  setUserProfilePinnedArticle,
+} from "../profiles/profile.service";
 
 
 function formatArticle(article: any) {
@@ -47,27 +52,25 @@ export async function getMyArticlesController(
       throw new AppError("page and limit must be positive integers", 400);
     }
 
-    const skip = (page - 1) * limit;
+    const user = await User.findById(req.user.userId).select("profilePinnedArticle");
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
 
-    const [articles, total] = await Promise.all([
-      Article.find({ author: req.user.userId })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate("author", "username email bio avatar"),
-      Article.countDocuments({ author: req.user.userId }),
-    ]);
-
+    const list = await getAuthorArticlesListWithProfilePin(
+      user,
+      page,
+      limit,
+      "newest",
+      req.user.userId
+    );
 
     res.status(200).json(
       successResponse("My articles fetched successfully", {
-        articles: articles.map(formatArticle),
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
+        profilePinnedArticleId: list.profilePinnedArticleId,
+        pinnedArticle: list.pinnedArticle,
+        articles: list.articles,
+        pagination: list.pagination,
       })
     );
   } catch (error) {
@@ -113,6 +116,23 @@ export async function getMyFavoriteArticlesController(
       })
     );
    } catch(error) {
-      next(error);
+     next(error);
    }
+}
+
+export async function patchProfilePinnedArticleController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!req.user?.userId) {
+      throw new AppError("Unauthorized", 401);
+    }
+    const { articleId } = req.body as { articleId: string | null };
+    const result = await setUserProfilePinnedArticle(req.user.userId, articleId);
+    res.status(200).json(successResponse("Profile pin updated", result));
+  } catch (error) {
+    next(error);
+  }
 }

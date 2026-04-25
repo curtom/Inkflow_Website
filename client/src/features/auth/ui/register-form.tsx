@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
+import { getPostAuthRedirectPath } from "@/shared/lib/post-auth-redirect";
 import {
     registerSchema,
     type RegisterFormValues,
@@ -15,6 +16,7 @@ import axios from "axios";
 
 export default function RegisterForm() {
     const dispatch = useAppDispatch();
+    const location = useLocation();
     const navigate = useNavigate();
 
     const {
@@ -41,7 +43,7 @@ export default function RegisterForm() {
 
             localStorage.setItem("token", token);
             dispatch(setCredentials({ token, user }));
-            navigate("/");
+            navigate(getPostAuthRedirectPath(location.state), { replace: true });
         } catch (error) {
             console.error("Register failed:", error);
 
@@ -97,7 +99,7 @@ export default function RegisterForm() {
 
             <p className="mt-4 text-center text-sm text-charcoal">
                 Already have an account?{" "}
-                <Link to="/login" className="font-medium text-terracotta underline decoration-terracotta/40 underline-offset-2 hover:text-coral">
+                <Link to="/login" state={location.state} className="font-medium text-terracotta underline decoration-terracotta/40 underline-offset-2 hover:text-coral">
                     Sign in
                 </Link>
             </p>

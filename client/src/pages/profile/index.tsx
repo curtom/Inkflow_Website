@@ -1,13 +1,20 @@
-import { getMyArticlesRequest, getMyProfileRequest, getMyFavoriteArticlesRequest } from "@/features/profile/api/profile-api";
-import { useQuery } from "@tanstack/react-query";
+import {
+  getMyArticlesRequest,
+  getMyProfileRequest,
+  getMyFavoriteArticlesRequest,
+  setProfilePinnedArticleRequest,
+} from "@/features/profile/api/profile-api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/api/query-keys";
 import ArticleList from "@/widgets/article-list";
 import { useState } from "react";
 import { cn } from "@/shared/lib/cn";
+import { mergeProfileArticleList } from "@/shared/lib/merge-profile-articles";
 
 
 export default function ProfilePage() {
     const [tab, setTab] = useState("published");
+    const queryClient = useQueryClient();
 
     const profileQuery = useQuery({
         queryKey: queryKeys.users.me,
@@ -23,8 +30,25 @@ export default function ProfilePage() {
         ? getMyArticlesRequest(1, 10) : getMyFavoriteArticlesRequest(1, 10),
     });
 
+    const profilePinMutation = useMutation({
+        mutationFn: (articleId: string | null) => setProfilePinnedArticleRequest(articleId),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ["profile", "my-articles"] });
+            const username = profileQuery.data?.data.user?.username;
+            if (username) {
+                await queryClient.invalidateQueries({
+                    queryKey: ["public-profile", "articles", username],
+                });
+            }
+        },
+    });
+
     const user = profileQuery.data?.data.user;
-    const articles = articlesQuery.data?.data.articles ?? [];
+    const publishedData = tab === "published" ? articlesQuery.data?.data : undefined;
+    const articles =
+        tab === "published"
+            ? mergeProfileArticleList(1, publishedData?.pinnedArticle ?? null, publishedData?.articles ?? [])
+            : (articlesQuery.data?.data.articles ?? []).map((a) => ({ ...a, isProfilePinned: false }));
 
     if(profileQuery.isLoading) {
         return <div className="mx-auto max-w-5xl px-4 py-10">Loading profile...</div>
@@ -95,7 +119,14 @@ export default function ProfilePage() {
             {articlesQuery.isLoading ? <p>Loading posts...</p> : null}
             {articlesQuery.isError ? <p>Failed to load posts.</p> : null}
             {!articlesQuery.isLoading && !articlesQuery.isError ? (
-            <ArticleList articles={articles} />
+            <ArticleList
+                articles={articles}
+                showProfilePinControls={tab === "published"}
+                profilePinLoading={profilePinMutation.isPending}
+                onProfilePin={(articleId) => {
+                    profilePinMutation.mutate(articleId);
+                }}
+            />
             ) : null}
          </section>
        </div>

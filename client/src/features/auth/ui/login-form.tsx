@@ -1,7 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod"
 import {useAppDispatch} from "@/shared/hooks/redux.ts";
-import { useNavigate, Link } from "react-router";
+import { useLocation, useNavigate, Link } from "react-router";
+import { getPostAuthRedirectPath } from "@/shared/lib/post-auth-redirect";
 import { type LoginFormValues, loginSchema} from "@/shared/schemas/auth.schema.ts";
 import {loginRequest} from "@/features/auth/api/auth-api.ts";
 import { setCredentials } from "@/features/auth/model/auth-slice"
@@ -11,6 +12,7 @@ import Button from "@/shared/ui/button";
 
 export default function LoginForm() {
     const dispatch= useAppDispatch();
+    const location = useLocation();
     const navigate = useNavigate();
 
     const {
@@ -32,7 +34,7 @@ export default function LoginForm() {
 
             localStorage.setItem("token", token);
             dispatch(setCredentials({token, user}));
-            navigate("/");
+            navigate(getPostAuthRedirectPath(location.state), { replace: true });
         }catch(error){
             console.error("Login failed:", error);
             alert("Login failed. Please check your credentials.");
@@ -63,7 +65,7 @@ export default function LoginForm() {
 
             <p className="mt-4 text-center text-sm text-charcoal">
                 Don&apos;t have an account?{" "}
-                <Link to="/register" className="font-medium text-terracotta underline decoration-terracotta/40 underline-offset-2 hover:text-coral">
+                <Link to="/register" state={location.state} className="font-medium text-terracotta underline decoration-terracotta/40 underline-offset-2 hover:text-coral">
                     Register
                 </Link>
             </p>

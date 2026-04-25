@@ -22,7 +22,7 @@ export const queryKeys = {
         infiniteList: (limit: number, tag: string) =>
             ["articles", "infinite", limit, tag] as const,
         detail: (slug: string) => ["articles", "details", slug] as const,
-        comments: (slug: string) => ["articles", "comments", slug] as const,
+        comments: (slug: string, sort: string) => ["articles", "comments", slug, sort] as const,
     },
     search: {
         overview: (keyword: string) => ["search", "overview", keyword] as const,

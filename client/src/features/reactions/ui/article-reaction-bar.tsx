@@ -1,4 +1,5 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "react-router";
 import { useAppSelector } from "@/shared/hooks/redux";
 import {
   toggleFavoriteArticleRequest,
@@ -24,7 +25,13 @@ export default function ArticleReactionBar({
   isFavorited = false,
 }: Props) {
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const navigate = useNavigate();
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+
+  const goLogin = () => {
+    void navigate("/login", { state: { from: location } });
+  };
 
   const invalidateArticles = () =>
     Promise.all([
@@ -47,12 +54,12 @@ export default function ArticleReactionBar({
     <div className="mt-5 flex items-center justify-end gap-4 border-t border-border-cream pt-4 text-sm text-stone">
       <button
         type="button"
-        disabled={!isAuthenticated || likeMutation.isPending}
+        disabled={likeMutation.isPending}
         onClick={async (e) => {
           e.preventDefault();
           e.stopPropagation();
           if (!isAuthenticated) {
-            window.alert("Please login to like this article");
+            goLogin();
             return;
           }
           await likeMutation.mutateAsync();
@@ -76,12 +83,12 @@ export default function ArticleReactionBar({
 
       <button
         type="button"
-        disabled={!isAuthenticated || favoriteMutation.isPending}
+        disabled={favoriteMutation.isPending}
         onClick={async (e) => {
           e.preventDefault();
           e.stopPropagation();
           if (!isAuthenticated) {
-            window.alert("Please login to favorite this article");
+            goLogin();
             return;
           }
           await favoriteMutation.mutateAsync();

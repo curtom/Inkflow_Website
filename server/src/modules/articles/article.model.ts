@@ -15,6 +15,8 @@ export interface IArticle extends Document {
     favoritesCount: number;
     commentsCount: number;
     viewsCount: number;
+    /** Author may pin one top-level comment to the top of the thread. */
+    pinnedComment?: Types.ObjectId | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -82,6 +84,11 @@ const articleSchema = new Schema<IArticle>(
           viewsCount: {
             type: Number,
             default: 0,
+          },
+          pinnedComment: {
+            type: Schema.Types.ObjectId,
+            ref: "Comment",
+            default: null,
           },
     },
     {

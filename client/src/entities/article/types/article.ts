@@ -21,6 +21,8 @@ export type Article = {
     viewsCount: number;
     isLiked: boolean;
     isFavorited: boolean;
+    /** Shown on profile post list when author pinned this post to their profile. */
+    isProfilePinned?: boolean;
     createdAt: string;
     updatedAt: string;
 };

@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema, Types } from "mongoose";
 
 export interface IUser extends Document {
     username: string;
@@ -7,6 +7,8 @@ export interface IUser extends Document {
     bio?: string;
     avatar?: string;
     notificationsLastViewedAt?: Date;
+    /** Pinned to top of this user's public / my-article list (one post). */
+    profilePinnedArticle?: Types.ObjectId | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -43,6 +45,11 @@ const UserSchema = new Schema<IUser>(
         notificationsLastViewedAt: {
             type: Date,
             default: undefined,
+        },
+        profilePinnedArticle: {
+            type: Schema.Types.ObjectId,
+            ref: "Article",
+            default: null,
         },
     },
     {

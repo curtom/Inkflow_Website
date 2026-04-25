@@ -1,4 +1,5 @@
-import { Link, useNavigate, useParams } from "react-router";
+import { useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteArticleRequest, getArticleBySlugRequest } from "@/entities/article/api/article-api";
 import MarkdownPreview from "@/features/markdown-editor/ui/markdown-preview";
@@ -6,6 +7,7 @@ import {
   getCommentsByArticleRequest,
   createCommentRequest,
   deleteCommentRequest,
+  setPinnedCommentRequest,
 } from "@/entities/comment/api/comment-api";
 import {
   toggleFavoriteArticleRequest,
@@ -17,13 +19,16 @@ import DeleteArticleButton from "@/features/delete-article/ui/delete-article-but
 import CommentList from "@/widgets/comment-list";
 import AddCommentForm from "@/features/add-comment/ui/add-comment-form";
 import { Heart, Bookmark, HashIcon, MessageCircle } from "lucide-react";
+import type { CommentSort } from "@/entities/comment/types/comment";
 
 export default function ArticleDetailPage() {
   const { slug = "" } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const currentUser = useAppSelector((state) => state.auth.user);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const [commentSort, setCommentSort] = useState<CommentSort>("newest");
 
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.articles.detail(slug),
@@ -32,13 +37,15 @@ export default function ArticleDetailPage() {
   });
 
   const commentsQuery = useQuery({
-    queryKey: queryKeys.articles.comments(slug),
-    queryFn: () => getCommentsByArticleRequest(slug),
+    queryKey: queryKeys.articles.comments(slug, commentSort),
+    queryFn: () => getCommentsByArticleRequest(slug, commentSort),
     enabled: Boolean(slug),
   });
 
   const article = data?.article;
-  const comments = commentsQuery.data?.data.comments ?? [];
+  const commentTree = commentsQuery.data?.data.comments ?? [];
+  const commentTotal = commentsQuery.data?.data.total ?? article?.commentsCount ?? 0;
+  const pinnedCommentId = commentsQuery.data?.data.pinnedCommentId ?? null;
   const isAuthor = currentUser?.id && article?.author.id === currentUser.id;
 
   const deleteMutation = useMutation({
@@ -50,11 +57,10 @@ export default function ArticleDetailPage() {
   });
 
   const createCommentMutation = useMutation({
-    mutationFn: (content: string) => createCommentRequest(slug, content),
+    mutationFn: (payload: { content: string; parentCommentId?: string }) =>
+      createCommentRequest(slug, payload.content, { parentCommentId: payload.parentCommentId }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.articles.comments(slug),
-      });
+      await queryClient.invalidateQueries({ queryKey: ["articles", "comments", slug] });
       await queryClient.invalidateQueries({ queryKey: queryKeys.articles.detail(slug) });
     },
   });
@@ -62,10 +68,15 @@ export default function ArticleDetailPage() {
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId: string) => deleteCommentRequest(slug, commentId),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.articles.comments(slug),
-      });
+      await queryClient.invalidateQueries({ queryKey: ["articles", "comments", slug] });
       await queryClient.invalidateQueries({ queryKey: queryKeys.articles.detail(slug) });
+    },
+  });
+
+  const pinCommentMutation = useMutation({
+    mutationFn: (commentId: string | null) => setPinnedCommentRequest(slug, commentId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["articles", "comments", slug] });
     },
   });
 
@@ -98,6 +109,10 @@ export default function ArticleDetailPage() {
     );
   }
 
+  const goLogin = () => {
+    void navigate("/login", { state: { from: location } });
+  };
+
   const scrollToComments = () => {
     document.getElementById("article-comments")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -112,10 +127,10 @@ export default function ArticleDetailPage() {
             <button
               type="button"
               title="赞"
-              disabled={!isAuthenticated || likeMutation.isPending}
+              disabled={likeMutation.isPending}
               onClick={async () => {
                 if (!isAuthenticated) {
-                  window.alert("Please log in to like articles.");
+                  goLogin();
                   return;
                 }
                 await likeMutation.mutateAsync();
@@ -137,10 +152,10 @@ export default function ArticleDetailPage() {
             <button
               type="button"
               title="收藏"
-              disabled={!isAuthenticated || favoriteMutation.isPending}
+              disabled={favoriteMutation.isPending}
               onClick={async () => {
                 if (!isAuthenticated) {
-                  window.alert("Please log in to save articles.");
+                  goLogin();
                   return;
                 }
                 await favoriteMutation.mutateAsync();
@@ -233,10 +248,10 @@ export default function ArticleDetailPage() {
         <div className="flex flex-wrap items-center gap-3 border-t border-border-cream px-8 py-5">
           <button
             type="button"
-            disabled={!isAuthenticated || likeMutation.isPending}
+            disabled={likeMutation.isPending}
             onClick={async () => {
               if (!isAuthenticated) {
-                window.alert("Please log in to like articles.");
+                goLogin();
                 return;
               }
               await likeMutation.mutateAsync();
@@ -257,10 +272,10 @@ export default function ArticleDetailPage() {
 
           <button
             type="button"
-            disabled={!isAuthenticated || favoriteMutation.isPending}
+            disabled={favoriteMutation.isPending}
             onClick={async () => {
               if (!isAuthenticated) {
-                window.alert("Please log in to save articles.");
+                goLogin();
                 return;
               }
               await favoriteMutation.mutateAsync();
@@ -299,16 +314,29 @@ export default function ArticleDetailPage() {
       </article>
 
       <section id="article-comments" className="mt-10 scroll-mt-24">
-        <h2 className="font-editorial mb-4 text-2xl font-medium text-ink">
-          Comments ({comments.length})
-        </h2>
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="font-editorial text-2xl font-medium text-ink">
+            评论（{commentTotal}）
+          </h2>
+          <label className="flex items-center gap-2 text-sm text-olive">
+            <span className="shrink-0">排序</span>
+            <select
+              value={commentSort}
+              onChange={(e) => setCommentSort(e.target.value as CommentSort)}
+              className="rounded-lg border border-border-cream bg-ivory px-3 py-1.5 text-sm text-ink outline-none focus:border-focus focus:ring-2 focus:ring-focus/20"
+            >
+              <option value="likes">按点赞数</option>
+              <option value="newest">按发布时间</option>
+            </select>
+          </label>
+        </div>
 
         {isAuthenticated ? (
           <div className="mb-5 rounded-2xl border border-border-cream bg-ivory p-6 shadow-whisper">
             <AddCommentForm
               loading={createCommentMutation.isPending}
               onSubmit={async (content) => {
-                await createCommentMutation.mutateAsync(content);
+                await createCommentMutation.mutateAsync({ content });
               }}
             />
           </div>
@@ -330,7 +358,16 @@ export default function ArticleDetailPage() {
         ) : null}
         {!commentsQuery.isLoading && !commentsQuery.isError ? (
           <CommentList
-            comments={comments}
+            slug={slug}
+            sort={commentSort}
+            comments={commentTree}
+            pinnedCommentId={pinnedCommentId}
+            isArticleAuthor={Boolean(isAuthor)}
+            isAuthenticated={isAuthenticated}
+            createPending={createCommentMutation.isPending}
+            onCreateComment={async (payload) => {
+              await createCommentMutation.mutateAsync(payload);
+            }}
             deletingId={
               deleteCommentMutation.isPending
                 ? String(deleteCommentMutation.variables ?? "")
@@ -339,6 +376,14 @@ export default function ArticleDetailPage() {
             onDelete={async (commentId) => {
               await deleteCommentMutation.mutateAsync(commentId);
             }}
+            onSetPinned={
+              isAuthor
+                ? async (commentId) => {
+                    await pinCommentMutation.mutateAsync(commentId);
+                  }
+                : undefined
+            }
+            pinPending={pinCommentMutation.isPending}
           />
         ) : null}
       </section>

@@ -18,6 +18,8 @@ type ProfileResponse = {
 type ProfileArticlesResponse = {
     message: string;
     data: {
+        profilePinnedArticleId?: string | null;
+        pinnedArticle?: Article | null;
         articles: Article[];
         pagination: {
             page: number;
@@ -40,4 +42,13 @@ export async function getMyFavoriteArticlesRequest(page = 1, limit = 10) {
     return (await api.get(ENDPOINTS.profile.myFavorites, {
         params: {page, limit},
     })) as unknown as ProfileArticlesResponse;
+}
+
+export async function setProfilePinnedArticleRequest(articleId: string | null) {
+    return (await api.patch(ENDPOINTS.users.profilePinnedArticle, {
+        articleId,
+    })) as unknown as {
+        message: string;
+        data: { profilePinnedArticleId: string | null };
+    };
 }
