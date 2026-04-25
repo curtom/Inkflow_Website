@@ -81,11 +81,13 @@ export async function getDashboardOverview(userId: string, month?: number) {
       : Promise.resolve(0),
     ReactionEvent.countDocuments({
       articleAuthor: userObjectId,
+      user: { $ne: userObjectId },
       type: "like",
       createdAt: { $gte: start, $lt: end },
     }),
     ReactionEvent.countDocuments({
       articleAuthor: userObjectId,
+      user: { $ne: userObjectId },
       type: "favorite",
       createdAt: { $gte: start, $lt: end },
     }),
@@ -188,7 +190,11 @@ export async function getNotificationsUnreadStatus(userId: string) {
 
   const [followCount, reactionCount, commentCount, followingPostCount] = await Promise.all([
     Follow.countDocuments({ following: userId, createdAt: { $gt: lastViewed } }),
-    ReactionEvent.countDocuments({ articleAuthor: userId, createdAt: { $gt: lastViewed } }),
+    ReactionEvent.countDocuments({
+      articleAuthor: userId,
+      user: { $ne: userObjectId },
+      createdAt: { $gt: lastViewed },
+    }),
     articleIds.length
       ? Comment.countDocuments({
           article: { $in: articleIds },
@@ -229,7 +235,7 @@ export async function getDashboardNotifications(userId: string, activityLimit = 
       .sort({ createdAt: -1 })
       .limit(fetchCap)
       .populate("follower", "username email bio avatar"),
-    ReactionEvent.find({ articleAuthor: userId })
+    ReactionEvent.find({ articleAuthor: userId, user: { $ne: userObjectId } })
       .sort({ createdAt: -1 })
       .limit(fetchCap)
       .populate("user", "username email bio avatar")
