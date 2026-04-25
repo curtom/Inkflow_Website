@@ -1,0 +1,52 @@
+name: Smart Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      client: ${{ steps.filter.outputs.client }}
+      server: ${{ steps.filter.outputs.server }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            client:
+              - 'client/**'
+            server:
+              - 'server/**'
+
+  deploy-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.client == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Netlify will auto deploy frontend"
+
+  deploy-backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.server == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 101.132.131.36
+          username: stefan
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd ~/Inkflow_Website
+            git pull origin master
+            cd server
+            docker compose down
+            docker compose up -d --build
+            docker image prune -f
