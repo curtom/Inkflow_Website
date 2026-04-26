@@ -44,9 +44,11 @@ jobs:
           port: 2222
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            set -e
             cd ~/Inkflow_Website
-            git pull origin master
+            git fetch origin
+            git reset --hard origin/master
             cd server
-            docker compose down
-            docker compose up -d --build
+            docker compose build
+            docker compose up -d
             docker image prune -f
