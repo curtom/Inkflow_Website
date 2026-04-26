@@ -45,7 +45,7 @@ Inkflow_Website/
 
 ### 1) 环境要求
 
-- Node.js 18+（建议 Node.js 20 LTS）
+- Node.js >=20.19（建议 Node.js 22 LTS）
 - npm 9+
 - MongoDB（本地或云服务）
 
