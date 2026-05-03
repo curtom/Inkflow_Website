@@ -109,7 +109,7 @@ export default function ArticleCard({ article, compact = false, profilePin }: Pr
               alt={article.title}
               className={cn(
                 "shrink-0 rounded-xl object-cover shadow-[0_0_0_1px_#f0eee6]",
-                compact ? "h-16 w-16" : "h-24 w-24"
+                compact ? "h-24 w-36" : "h-24 w-24"
               )}
             />
           ) : null}

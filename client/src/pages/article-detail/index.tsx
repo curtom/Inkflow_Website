@@ -119,8 +119,9 @@ export default function ArticleDetailPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-10">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
       <div
-        className="hidden md:fixed md:left-[max(1rem,calc((100vw-min(100vw,56rem))/2+0.5rem))] md:top-36 md:z-30 md:flex md:w-10 md:flex-col md:items-center md:gap-4 md:py-1"
+        className="hidden md:z-10 md:flex md:w-10 md:shrink-0 md:flex-col md:items-center md:gap-4 md:self-start md:py-1 md:sticky md:top-36"
         role="group"
         aria-label="文章互动"
       >
@@ -185,7 +186,7 @@ export default function ArticleDetailPage() {
             </button>
       </div>
 
-        <div className="min-w-0 max-w-3xl md:max-w-none md:pl-5">
+        <div className="mx-auto min-w-0 w-full max-w-3xl flex-1 md:mx-0 md:max-w-none">
       <article className="overflow-hidden rounded-[32px] border border-border-cream bg-ivory shadow-whisper">
         <div className="px-8 pb-6 pt-8">
           <div className="flex items-center gap-3">
@@ -388,6 +389,7 @@ export default function ArticleDetailPage() {
         ) : null}
       </section>
         </div>
+      </div>
     </div>
   );
 }

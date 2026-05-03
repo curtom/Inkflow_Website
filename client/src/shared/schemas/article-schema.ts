@@ -14,9 +14,9 @@ export const articleSchema = z.object({
         .min(20, "Content must be at least 20 characters"),
     coverImage: z
         .string()
-        .url("Cover image must be a valid URL")
-        .or(z.literal(""))
-        .optional(),
+        .trim()
+        .min(1, "Cover image is required")
+        .url("请输入有效的封面图片地址"),
     tags: z.string().optional(),
 });
 

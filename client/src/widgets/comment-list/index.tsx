@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback, type FormEvent } from "react";
 import { useAppSelector } from "@/shared/hooks/redux";
-import { useLocation, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import type { CommentNode, CommentSort } from "@/entities/comment/types/comment";
 import { toggleCommentLikeRequest } from "@/entities/comment/api/comment-api";
 import ConfirmDialog from "@/shared/ui/confirm-dialog";
@@ -220,6 +220,7 @@ function CommentBlock({
   const replies = comment.replies ?? [];
   const hasReplies = replies.length > 0;
   const isOpen = expanded[comment.id] ?? false;
+  const authorProfilePath = `/profiles/${encodeURIComponent(comment.author.username)}`;
 
   const publishReply = async (e: FormEvent) => {
     e.preventDefault();
@@ -235,7 +236,11 @@ function CommentBlock({
 
   return (
     <div className="flex gap-2">
-      <div className="h-9 w-9 shrink-0">
+      <Link
+        to={authorProfilePath}
+        className="h-9 w-9 shrink-0 overflow-hidden rounded-full outline-none focus-visible:ring-2 focus-visible:ring-focus/35 focus-visible:ring-offset-2 focus-visible:ring-offset-parchment"
+        title={comment.author.username}
+      >
         {comment.author.avatar ? (
           <img
             src={comment.author.avatar}
@@ -247,10 +252,15 @@ function CommentBlock({
             {comment.author.username.charAt(0).toUpperCase()}
           </div>
         )}
-      </div>
+      </Link>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-2">
-          <span className="text-sm font-medium text-ink">{comment.author.username}</span>
+          <Link
+            to={authorProfilePath}
+            className="text-sm font-medium text-ink outline-none hover:text-terracotta hover:underline decoration-current underline-offset-2 focus-visible:ring-2 focus-visible:ring-focus/35 focus-visible:ring-offset-2 focus-visible:ring-offset-parchment"
+          >
+            {comment.author.username}
+          </Link>
           {isPinned ? (
             <span className="inline-flex items-center gap-0.5 rounded-md bg-terracotta/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-terracotta">
               <Pin className="h-3 w-3" aria-hidden />

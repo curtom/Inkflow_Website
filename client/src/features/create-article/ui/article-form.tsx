@@ -1,12 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Redo2, Undo2 } from "lucide-react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Input from "@/shared/ui/input";
 import Button from "@/shared/ui/button";
 import ImageUploadField from "@/features/upload-image/ui/image-upload-field";
 import MarkdownToolbar from "@/features/markdown-editor/ui/markdown-toolbar";
 import MarkdownPreview from "@/features/markdown-editor/ui/markdown-preview";
+import {
+  buildContentImageSnippet,
+  listImageTokens,
+  replaceImageAtIndexWithWidth,
+} from "@/features/markdown-editor/lib/content-images";
 import { uploadImageRequest } from "@/entities/upload/api/upload-api";
 import {
   articleSchema,
@@ -88,6 +93,7 @@ export default function ArticleForm({
   // Image insertion state
   const [imageInputOpen, setImageInputOpen] = useState(false);
   const [imageAlt, setImageAlt] = useState("");
+  const [imageDisplayWidth, setImageDisplayWidth] = useState("");
   const [imageUploading, setImageUploading] = useState(false);
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [suggestHint, setSuggestHint] = useState("");
@@ -222,8 +228,6 @@ export default function ArticleForm({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftKey]);
 
-  const { ref: contentRef, ...contentRegister } = register("content");
-
   const title = watch("title");
   const summary = watch("summary");
   const content = watch("content");
@@ -309,11 +313,11 @@ export default function ArticleForm({
     setDraftBanner(null);
   };
 
-  const previewMarkdown = useMemo(() => {
+  const previewSegments = useMemo(() => {
     const tagLine = tags
       ? tags
           .split(",")
-          .map((tag) => tag.trim())
+          .map((t) => t.trim())
           .filter(Boolean)
           .map((tag) => `#${tag}`)
           .join(" ")
@@ -324,10 +328,45 @@ export default function ArticleForm({
       summary ? `> ${summary}` : "",
       tagLine,
       content || "Write your post content here...",
-    ]
-      .filter(Boolean)
-      .join("\n\n");
+    ].filter(Boolean);
   }, [title, summary, tags, content]);
+
+  const previewMarkdown = useMemo(() => previewSegments.join("\n\n"), [previewSegments]);
+
+  const previewBodyImageOffset = useMemo(() => {
+    const prefix = previewSegments.slice(0, -1).join("\n\n");
+    return listImageTokens(prefix).length;
+  }, [previewSegments]);
+
+  const handlePreviewBodyImageResize = useCallback(
+    (bodyImageIndex: number, widthPx: number) => {
+      const body = getValues("content");
+      const next = replaceImageAtIndexWithWidth(body, bodyImageIndex, widthPx);
+      if (next !== body) {
+        const beforeSnapshot = cloneFormSnapshot(getValues());
+        const afterSnapshot = {
+          ...beforeSnapshot,
+          content: next,
+        };
+        setValue("content", next, {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+        if (
+          lastSnapshotRef.current &&
+          !formSnapshotsEqual(lastSnapshotRef.current, beforeSnapshot)
+        ) {
+          pastRef.current = [...pastRef.current, lastSnapshotRef.current];
+        }
+        pastRef.current = [...pastRef.current, beforeSnapshot];
+        futureRef.current = [];
+        lastSnapshotRef.current = afterSnapshot;
+        setHistoryVersion((x) => x + 1);
+      }
+    },
+    [getValues, setValue],
+  );
 
   const applyMarkdown = (action: string) => {
     const textarea = textareaRef.current;
@@ -338,6 +377,7 @@ export default function ArticleForm({
       const selected = textarea ? textarea.value.slice(start, end) : "";
       imageCursorRef.current = { start, end };
       setImageAlt(selected || "");
+      setImageDisplayWidth("");
       setImageInputOpen(true);
       return;
     }
@@ -422,25 +462,26 @@ export default function ArticleForm({
     }
   };
 
-  const insertImageMarkdown = (url: string, alt: string) => {
+  const insertImageMarkdown = (url: string, alt: string, widthRaw: string) => {
     const textarea = textareaRef.current;
     const { start, end } = imageCursorRef.current;
     const current = getValues("content");
     const before = current.slice(0, start);
     const after = current.slice(end);
-    const mdImage = `![${alt || "image"}](${url})`;
-    setValue("content", before + mdImage + after, { shouldValidate: true, shouldDirty: true });
+    const snippet = buildContentImageSnippet(url, alt, widthRaw);
+    setValue("content", before + snippet + after, { shouldValidate: true, shouldDirty: true });
 
     requestAnimationFrame(() => {
       if (textarea) {
         textarea.focus();
-        const pos = start + mdImage.length;
+        const pos = start + snippet.length;
         textarea.setSelectionRange(pos, pos);
       }
     });
 
     setImageInputOpen(false);
     setImageAlt("");
+    setImageDisplayWidth("");
   };
 
   const handleUploadImageFile = async (file: File | null) => {
@@ -448,7 +489,11 @@ export default function ArticleForm({
     try {
       setImageUploading(true);
       const response = await uploadImageRequest(file);
-      insertImageMarkdown(response.data.url, imageAlt.trim() || file.name.replace(/\.[^.]+$/, ""));
+      insertImageMarkdown(
+        response.data.url,
+        imageAlt.trim() || file.name.replace(/\.[^.]+$/, ""),
+        imageDisplayWidth
+      );
     } catch {
       window.alert("Image upload failed. Please try again.");
     } finally {
@@ -459,9 +504,19 @@ export default function ArticleForm({
 
   return (
     <form
-      onSubmit={handleSubmit(async (values) => {
-        await onSubmit(values);
-      })}
+      onSubmit={handleSubmit(
+        async (values) => {
+          await onSubmit(values);
+        },
+        (submitErrors) => {
+          if (submitErrors.coverImage) {
+            document.getElementById("article-cover-field")?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }
+        }
+      )}
       className="space-y-6"
     >
       {/* Draft restore banner */}
@@ -492,24 +547,28 @@ export default function ArticleForm({
 
       <div className="rounded-3xl border border-border-cream bg-ivory shadow-whisper">
         <div className="flex flex-col gap-4 border-b border-border-cream px-6 py-5 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap items-center gap-3">
-            <ImageUploadField
-              label="Add a cover image"
-              layout="horizontal"
-              value={coverImage ?? ""}
-              onUploaded={(url) =>
-                setValue("coverImage", url, { shouldValidate: true })
-              }
-            />
-
-            <div className="hidden">
-              <Input
-                label="Cover Image URL"
-                placeholder="https://example.com/cover.jpg"
-                error={errors.coverImage?.message}
-                {...register("coverImage")}
+          <div id="article-cover-field" className="flex min-w-0 flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <ImageUploadField
+                label="Add a cover image"
+                layout="horizontal"
+                value={coverImage ?? ""}
+                onUploaded={(url) =>
+                  setValue("coverImage", url, { shouldValidate: true })
+                }
               />
+
+              <div className="hidden">
+                <Input
+                  label="Cover Image URL"
+                  placeholder="https://example.com/cover.jpg"
+                  {...register("coverImage")}
+                />
+              </div>
             </div>
+            {errors.coverImage?.message ? (
+              <p className="text-sm text-error">{errors.coverImage.message}</p>
+            ) : null}
           </div>
 
           <div className="flex items-center gap-4">
@@ -611,9 +670,20 @@ export default function ArticleForm({
                 {imageUploading ? (
                   <span className="text-xs text-warm-silver">Uploading...</span>
                 ) : null}
+                <input
+                  type="text"
+                  placeholder="显示宽度：400（px）或 60%（可选）"
+                  value={imageDisplayWidth}
+                  onChange={(e) => setImageDisplayWidth(e.target.value)}
+                  disabled={imageUploading}
+                  className="min-w-[11rem] rounded-lg border border-border-warm bg-ivory px-3 py-1.5 text-sm text-ink outline-none placeholder:text-warm-silver focus:border-focus focus:ring-2 focus:ring-focus/25 disabled:opacity-60"
+                />
                 <button
                   type="button"
-                  onClick={() => setImageInputOpen(false)}
+                  onClick={() => {
+                    setImageInputOpen(false);
+                    setImageDisplayWidth("");
+                  }}
                   className="rounded-md px-2 py-1 text-xs text-warm-silver hover:bg-warm-sand/80"
                 >
                   ✕
@@ -624,22 +694,34 @@ export default function ArticleForm({
 
           {tab === "edit" ? (
             <div className="min-h-[420px] rounded-b-3xl bg-ivory px-6 py-6">
-              <textarea
-                rows={18}
-                placeholder="Write your post content here..."
-                className="h-[420px] w-full resize-none border-none bg-transparent font-mono text-3xl leading-10 text-charcoal outline-none placeholder:text-warm-silver"
-                ref={(el) => {
-                  contentRef(el);
-                  textareaRef.current = el;
-                }}
-                {...contentRegister}
+              <Controller
+                name="content"
+                control={control}
+                render={({ field }) => (
+                  <textarea
+                    rows={18}
+                    placeholder="Write your post content here..."
+                    className="h-[420px] w-full resize-none border-none bg-transparent font-mono text-3xl leading-10 text-charcoal outline-none placeholder:text-warm-silver"
+                    ref={(el) => {
+                      field.ref(el);
+                      textareaRef.current = el;
+                    }}
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                  />
+                )}
               />
               {errors.content?.message ? (
                 <p className="mt-2 text-sm text-error">{errors.content.message}</p>
               ) : null}
             </div>
           ) : (
-            <MarkdownPreview content={previewMarkdown} />
+            <MarkdownPreview
+              content={previewMarkdown}
+              previewBodyImageOffset={previewBodyImageOffset}
+              onPreviewBodyImageResize={handlePreviewBodyImageResize}
+            />
           )}
         </div>
       </div>

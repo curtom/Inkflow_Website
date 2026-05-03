@@ -1,14 +1,62 @@
 import ReactMarkdown from "react-markdown";
+import { useRef, type CSSProperties } from "react";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
+import { markdownSanitizeSchema } from "@/features/markdown-editor/lib/markdown-sanitize-schema";
+import { cn } from "@/shared/lib/cn";
+import EditorResizablePreviewImage from "@/features/markdown-editor/ui/editor-resizable-preview-image";
 
 type Props = {
   content: string;
   variant?: "editor" | "article";
+  /**
+   * 完整预览里，正文 `content` 之前的片段中出现的图片数量（用于把预览中第 n 张图映射到正文里的第 n - offset 张）。
+   */
+  previewBodyImageOffset?: number;
+  /** 仅在 variant=editor 且传入时：拖拽预览图后回写正文 */
+  onPreviewBodyImageResize?: (bodyImageIndex: number, widthPx: number) => void;
 };
 
-export default function MarkdownPreview({ content, variant = "editor" }: Props) {
+function toPxCssSize(value: number | string | undefined) {
+  if (value == null) return null;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return `${Math.round(value)}px`;
+  }
+  if (typeof value === "string" && /^\d+$/.test(value.trim())) {
+    return `${Number(value.trim())}px`;
+  }
+  return null;
+}
+
+function mergeImageStyle(
+  style: CSSProperties | undefined,
+  width: number | string | undefined,
+  height: number | string | undefined,
+): CSSProperties | undefined {
+  const widthPx = toPxCssSize(width);
+  const heightPx = toPxCssSize(height);
+  if (!style && !widthPx && !heightPx) return undefined;
+
+  return {
+    ...style,
+    ...(widthPx ? { width: widthPx } : {}),
+    ...(heightPx ? { height: heightPx } : {}),
+  };
+}
+
+export default function MarkdownPreview({
+  content,
+  variant = "editor",
+  previewBodyImageOffset = 0,
+  onPreviewBodyImageResize,
+}: Props) {
   const isArticle = variant === "article";
+  const imgSeqRef = useRef(0);
+  imgSeqRef.current = 0;
+
+  const useResize = variant === "editor" && Boolean(onPreviewBodyImageResize);
 
   return (
     <div
@@ -20,6 +68,7 @@ export default function MarkdownPreview({ content, variant = "editor" }: Props) 
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, markdownSanitizeSchema]]}
         components={{
           h1: ({ children }) => (
             <h1
@@ -146,13 +195,48 @@ export default function MarkdownPreview({ content, variant = "editor" }: Props) 
           ),
           br: () => <br />,
           hr: () => <hr className="my-8 border-border-cream" />,
-          img: ({ src, alt }) => (
-            <img
-              src={src}
-              alt={alt ?? ""}
-              className="my-6 max-w-full rounded-2xl shadow-whisper"
-            />
-          ),
+          img: (props) => {
+            const seq = imgSeqRef.current++;
+            const bodyIdx = seq - previewBodyImageOffset;
+            const { src, alt, width, height, style, className } = props;
+            const imageStyle = mergeImageStyle(
+              style as CSSProperties | undefined,
+              width,
+              height,
+            );
+
+            if (useResize && bodyIdx >= 0 && onPreviewBodyImageResize) {
+              return (
+                <EditorResizablePreviewImage
+                  key={`${seq}-${String(src)}`}
+                  src={src}
+                  alt={alt}
+                  width={width}
+                  height={height}
+                  style={imageStyle}
+                  className={className as string | undefined}
+                  bodyImageIndex={bodyIdx}
+                  onCommitWidth={onPreviewBodyImageResize}
+                />
+              );
+            }
+
+            return (
+              <img
+                key={`${seq}-${String(src)}`}
+                src={src}
+                alt={alt ?? ""}
+                width={width}
+                height={height}
+                style={imageStyle}
+                className={cn(
+                  "my-6 max-w-full rounded-2xl shadow-whisper",
+                  imageStyle?.height == null && "h-auto",
+                  className,
+                )}
+              />
+            );
+          },
         }}
       >
         {content || "Nothing to preview yet..."}
