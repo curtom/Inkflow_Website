@@ -61,7 +61,6 @@ export async function searchStories({
         author: {
           id: "$author._id",
           username: "$author.username",
-          email: "$author.email",
           bio: "$author.bio",
           avatar: "$author.avatar",
         },
@@ -93,20 +92,12 @@ export async function searchUsers({
   const users = await User.aggregate([
     {
       $match: {
-        $or: [
-          { username: regex },
-          { email: regex },
-        ],
+        username: regex,
       },
     },
     {
       $addFields: {
-        relevanceScore: {
-          $add: [
-            { $cond: [{ $regexMatch: { input: "$username", regex } }, 200, 0] },
-            { $cond: [{ $regexMatch: { input: "$email", regex } }, 100, 0] },
-          ],
-        },
+        relevanceScore: { $cond: [{ $regexMatch: { input: "$username", regex } }, 200, 0] },
       },
     },
     { $sort: { relevanceScore: -1, createdAt: -1 } },
@@ -115,7 +106,6 @@ export async function searchUsers({
       $project: {
         id: "$_id",
         username: 1,
-        email: 1,
         bio: 1,
         avatar: 1,
       },

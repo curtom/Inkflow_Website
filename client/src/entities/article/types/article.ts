@@ -1,7 +1,6 @@
 export type ArticleAuthor = {
     id: string;
     username: string;
-    email: string;
     bio?: string;
     avatar?: string;
 };

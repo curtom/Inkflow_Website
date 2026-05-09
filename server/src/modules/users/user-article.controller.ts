@@ -7,6 +7,7 @@ import {
   getAuthorArticlesListWithProfilePin,
   setUserProfilePinnedArticle,
 } from "../profiles/profile.service";
+import { PUBLIC_USER_SELECT } from "../../common/serializers/user";
 
 
 function formatArticle(article: any) {
@@ -21,7 +22,6 @@ function formatArticle(article: any) {
     author: {
       id: String(article.author._id),
       username: article.author.username,
-      email: article.author.email,
       bio: article.author.bio ?? "",
       avatar: article.author.avatar ?? "",
     },
@@ -100,7 +100,7 @@ export async function getMyFavoriteArticlesController(
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate("author", "username email bio avatar"),
+        .populate("author", PUBLIC_USER_SELECT),
       Article.countDocuments(filter),
     ]);
 

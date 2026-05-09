@@ -2,6 +2,7 @@ import mongoose, { Types } from "mongoose";
 import { AppError } from "../../common/utils/app-error";
 import { Article } from "../articles/article.model";
 import { Comment } from "./comment.model";
+import { PUBLIC_USER_SELECT, sanitizePublicUser } from "../../common/serializers/user";
 
 const MAX_THREAD_DEPTH = 10;
 
@@ -10,7 +11,6 @@ export type CommentSortMode = "likes" | "newest";
 type CommentAuthor = {
   _id: unknown;
   username: string;
-  email: string;
   bio?: string;
   avatar?: string;
 };
@@ -30,13 +30,7 @@ type CommentNodeOut = {
 };
 
 function sanitizeAuthor(author: CommentAuthor) {
-  return {
-    id: String(author._id),
-    username: author.username,
-    email: author.email,
-    bio: author.bio ?? "",
-    avatar: author.avatar ?? "",
-  };
+  return sanitizePublicUser(author);
 }
 
 /** Depth of `comment` in its thread: root = 1 */
@@ -192,7 +186,7 @@ export async function getCommentsByArticleSlug(
 
   const rows = (await Comment.find({ article: article._id })
     .sort({ createdAt: 1 })
-    .populate("author", "username email bio avatar")
+    .populate("author", PUBLIC_USER_SELECT)
     .lean()) as unknown as LeanComment[];
 
   let comments = buildTree(rows, userId, sort);
@@ -242,7 +236,7 @@ export async function createComment(
 
   const populatedComment = await Comment.findById(comment._id).populate(
     "author",
-    "username email bio avatar"
+    PUBLIC_USER_SELECT
   );
 
   if (!populatedComment) {

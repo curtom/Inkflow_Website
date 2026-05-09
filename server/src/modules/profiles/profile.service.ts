@@ -3,6 +3,7 @@ import { AppError } from "../../common/utils/app-error";
 import { Article } from "../articles/article.model";
 import { User } from "../users/user.model";
 import { Follow } from "../follows/follow.model";
+import { PUBLIC_USER_SELECT, sanitizePublicUser } from "../../common/serializers/user";
 
 export type ProfileArticleSort = "newest" | "likes";
 
@@ -10,17 +11,10 @@ export type ProfileArticleSort = "newest" | "likes";
 function sanitizeUser(user: {
     _id: unknown;
     username: string;
-    email: string;
     bio?: string;
     avatar?: string;
   }) {
-    return {
-      id: String(user._id),
-      username: user.username,
-      email: user.email,
-      bio: user.bio ?? "",
-      avatar: user.avatar ?? "",
-    };
+    return sanitizePublicUser(user);
   }
   
   function sanitizeArticle(article: any, currentUserId?: string) {
@@ -35,7 +29,6 @@ function sanitizeUser(user: {
       author: {
         id: String(article.author._id),
         username: article.author.username,
-        email: article.author.email,
         bio: article.author.bio ?? "",
         avatar: article.author.avatar ?? "",
       },
@@ -106,7 +99,7 @@ function sanitizeUser(user: {
       pinnedDoc = await Article.findOne({
         _id: user.profilePinnedArticle,
         author: user._id,
-      }).populate("author", "username email bio avatar");
+      }).populate("author", PUBLIC_USER_SELECT);
     }
     if (user.profilePinnedArticle && !pinnedDoc) {
       await User.updateOne({ _id: user._id }, { $unset: { profilePinnedArticle: 1 } });
@@ -134,7 +127,7 @@ function sanitizeUser(user: {
     const rows = await listQuery
       .skip(nonPinnedSkip)
       .limit(nonPinnedLimit)
-      .populate("author", "username email bio avatar");
+      .populate("author", PUBLIC_USER_SELECT);
 
     const profilePinnedArticleId = pinnedDoc ? String(pinnedDoc._id) : null;
     const pinnedArticle =

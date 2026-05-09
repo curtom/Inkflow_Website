@@ -1,5 +1,6 @@
 import { AppError } from "../../common/utils/app-error";
 import { hashPassword } from "../../common/utils/hash";
+import { sanitizePrivateUser } from "../../common/serializers/user";
 import { User } from "./user.model";
 
 function sanitizeUser(user: {
@@ -9,13 +10,7 @@ function sanitizeUser(user: {
     bio?: string;
     avatar?: string;
 }) {
-    return {
-        id: String(user._id),
-        username: user.username,
-        email: user.email,
-        bio: user.bio ?? "",
-        avatar: user.avatar ?? "",
-    };
+    return sanitizePrivateUser(user);
 }
 
 export async function getCurrentUserProfile(userId: string) {
