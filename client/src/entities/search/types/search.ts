@@ -4,7 +4,6 @@ import type { Article } from "../../article/types/article";
 export type SearchUser = {
     id: string;
     username: string;
-    email: string;
     bio?: string;
     avatar?: string;
 }

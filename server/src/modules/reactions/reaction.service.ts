@@ -1,6 +1,7 @@
 import { Article } from "../articles/article.model";
 import { AppError } from "../../common/utils/app-error";
 import { ReactionEvent } from "./reaction-event.model";
+import { PUBLIC_USER_SELECT } from "../../common/serializers/user";
 
 
 function hasUser(list: unknown[], userId: string) {
@@ -18,7 +19,7 @@ function articleAuthorId(article: { author: unknown }): string {
 export async function toggleLikeArticle(userId: string, slug: string) {
     const article = await Article.findOne({ slug }).populate(
         "author",
-        "username email bio avatar"
+        PUBLIC_USER_SELECT
     );
 
     if(!article) {
@@ -68,7 +69,7 @@ export async function toggleLikeArticle(userId: string, slug: string) {
 export async function toggleFavoriteArticle(userId: string, slug: string) {
     const article = await Article.findOne({ slug }).populate(
       "author",
-      "username email bio avatar"
+      PUBLIC_USER_SELECT
     );
   
     if (!article) {
