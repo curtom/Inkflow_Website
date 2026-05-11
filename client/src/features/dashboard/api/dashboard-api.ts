@@ -28,7 +28,6 @@ type DashboardOverviewResponse = {
 type DashboardSocialUser = {
   id: string;
   username: string;
-  email: string;
   bio?: string;
   avatar?: string;
 };
