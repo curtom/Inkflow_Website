@@ -1,7 +1,6 @@
 export type CommentAuthor = {
   id: string;
   username: string;
-  email: string;
   bio?: string;
   avatar?: string;
 };

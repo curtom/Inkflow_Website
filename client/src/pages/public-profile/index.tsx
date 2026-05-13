@@ -133,7 +133,6 @@ export default function PublicProfilePage() {
 
           <div className="min-w-0 flex-1">
             <h1 className="text-3xl font-medium text-ink">{user.username}</h1>
-            <p className="mt-1 text-stone">{user.email}</p>
             <p className="mt-4 whitespace-pre-wrap text-charcoal">
               {user.bio || "No bio yet."}
             </p>

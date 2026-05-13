@@ -21,7 +21,6 @@ function formatArticle(article: any) {
     author: {
       id: String(article.author._id),
       username: article.author.username,
-      email: article.author.email,
       bio: article.author.bio ?? "",
       avatar: article.author.avatar ?? "",
     },
@@ -100,7 +99,7 @@ export async function getMyFavoriteArticlesController(
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate("author", "username email bio avatar"),
+        .populate("author", "username bio avatar"),
       Article.countDocuments(filter),
     ]);
 
