@@ -9,7 +9,6 @@ import { mergeCommunityTagsFromEmbedding } from "../community/community-classifi
 type ArticleAuthor = {
     _id: unknown;
     username: string;
-    email: string;
     bio?: string;
     avatar?: string;
 };
@@ -18,7 +17,6 @@ function sanitizeAuthor(author: ArticleAuthor) {
     return {
         id: String(author._id),
         username: author.username,
-        email: author.email,
         bio: author.bio ?? "",
         avatar: author.avatar ?? "",
     };
@@ -167,7 +165,7 @@ export async function createArticle(userId: string, payload: CreateArticleInput)
 
     const populatedArticle = await Article.findById(article._id).populate(
         "author",
-        "username email bio avatar"
+        "username bio avatar"
     );
 
     if (!populatedArticle) {
@@ -202,7 +200,7 @@ export async function getArticles(query: GetArticlesInput) {
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .populate("author", "username email bio avatar"),
+            .populate("author", "username bio avatar"),
         Article.countDocuments(filter),
     ]);
 
@@ -226,7 +224,7 @@ export async function getArticleBySlug(
 ) {
     const article = await Article.findOne({ slug }).populate(
         "author",
-        "username email bio avatar"
+        "username bio avatar"
     );
 
     if (!article) {
@@ -325,7 +323,7 @@ export async function updateArticle(
 
     const updatedArticle = await Article.findById(article._id).populate(
         "author",
-        "username email bio avatar"
+        "username bio avatar"
     );
 
     if (!updatedArticle) {
