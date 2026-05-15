@@ -1,5 +1,21 @@
 import { Article } from "../articles/article.model";
 import { User } from "../users/user.model";
+import { AppError } from "../../common/utils/app-error";
+
+const MAX_SEARCH_KEYWORD_LENGTH = 100;
+
+function normalizeSearchKeyword(keyword: string) {
+  const normalized = keyword.trim();
+  if (normalized.length > MAX_SEARCH_KEYWORD_LENGTH) {
+    throw new AppError("Search keyword is too long", 400);
+  }
+  return normalized;
+}
+
+function createLiteralSearchRegex(keyword: string) {
+  const escaped = normalizeSearchKeyword(keyword).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(escaped, "i");
+}
 
 type SearchStoriesInput = {
   keyword: string;
@@ -10,7 +26,7 @@ export async function searchStories({
   keyword,
   limit = 10,
 }: SearchStoriesInput) {
-  const regex = new RegExp(keyword, "i");
+  const regex = createLiteralSearchRegex(keyword);
 
   const stories = await Article.aggregate([
     {
@@ -61,7 +77,6 @@ export async function searchStories({
         author: {
           id: "$author._id",
           username: "$author.username",
-          email: "$author.email",
           bio: "$author.bio",
           avatar: "$author.avatar",
         },
@@ -88,15 +103,12 @@ export async function searchUsers({
   keyword,
   limit = 10,
 }: SearchUsersInput) {
-  const regex = new RegExp(keyword, "i");
+  const regex = createLiteralSearchRegex(keyword);
 
   const users = await User.aggregate([
     {
       $match: {
-        $or: [
-          { username: regex },
-          { email: regex },
-        ],
+        username: regex,
       },
     },
     {
@@ -104,7 +116,6 @@ export async function searchUsers({
         relevanceScore: {
           $add: [
             { $cond: [{ $regexMatch: { input: "$username", regex } }, 200, 0] },
-            { $cond: [{ $regexMatch: { input: "$email", regex } }, 100, 0] },
           ],
         },
       },
@@ -115,7 +126,6 @@ export async function searchUsers({
       $project: {
         id: "$_id",
         username: 1,
-        email: 1,
         bio: 1,
         avatar: 1,
       },
@@ -137,8 +147,10 @@ export async function searchTags({
   keyword,
   limit = 10,
 }: SearchTagsInput) {
-  const regex = new RegExp(keyword, "i");
-  const exactRegex = new RegExp(`^${keyword}$`, "i");
+  const normalizedKeyword = normalizeSearchKeyword(keyword);
+  const escapedKeyword = normalizedKeyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(escapedKeyword, "i");
+  const exactRegex = new RegExp(`^${escapedKeyword}$`, "i");
 
   const tags = await Article.aggregate([
     { $unwind: "$tags" },

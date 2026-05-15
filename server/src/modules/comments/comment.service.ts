@@ -10,7 +10,6 @@ export type CommentSortMode = "likes" | "newest";
 type CommentAuthor = {
   _id: unknown;
   username: string;
-  email: string;
   bio?: string;
   avatar?: string;
 };
@@ -33,7 +32,6 @@ function sanitizeAuthor(author: CommentAuthor) {
   return {
     id: String(author._id),
     username: author.username,
-    email: author.email,
     bio: author.bio ?? "",
     avatar: author.avatar ?? "",
   };
@@ -192,7 +190,7 @@ export async function getCommentsByArticleSlug(
 
   const rows = (await Comment.find({ article: article._id })
     .sort({ createdAt: 1 })
-    .populate("author", "username email bio avatar")
+    .populate("author", "username bio avatar")
     .lean()) as unknown as LeanComment[];
 
   let comments = buildTree(rows, userId, sort);
@@ -242,7 +240,7 @@ export async function createComment(
 
   const populatedComment = await Comment.findById(comment._id).populate(
     "author",
-    "username email bio avatar"
+    "username bio avatar"
   );
 
   if (!populatedComment) {
