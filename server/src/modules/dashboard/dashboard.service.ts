@@ -10,7 +10,6 @@ import { User } from "../users/user.model";
 type DashboardUser = {
   _id: unknown;
   username: string;
-  email: string;
   bio?: string;
   avatar?: string;
 };
@@ -19,7 +18,6 @@ function sanitizeUser(user: DashboardUser) {
   return {
     id: String(user._id),
     username: user.username,
-    email: user.email,
     bio: user.bio ?? "",
     avatar: user.avatar ?? "",
   };
@@ -234,11 +232,11 @@ export async function getDashboardNotifications(userId: string, activityLimit = 
     Follow.find({ following: userId })
       .sort({ createdAt: -1 })
       .limit(fetchCap)
-      .populate("follower", "username email bio avatar"),
+      .populate("follower", "username bio avatar"),
     ReactionEvent.find({ articleAuthor: userId, user: { $ne: userObjectId } })
       .sort({ createdAt: -1 })
       .limit(fetchCap)
-      .populate("user", "username email bio avatar")
+      .populate("user", "username bio avatar")
       .populate("article", "title slug"),
     articleIds.length
       ? Comment.find({
@@ -247,17 +245,17 @@ export async function getDashboardNotifications(userId: string, activityLimit = 
         })
           .sort({ createdAt: -1 })
           .limit(fetchCap)
-          .populate("author", "username email bio avatar")
+          .populate("author", "username bio avatar")
           .populate("article", "title slug")
       : Promise.resolve([]),
     Follow.find({ following: userId })
       .sort({ createdAt: -1 })
-      .populate("follower", "username email bio avatar"),
+      .populate("follower", "username bio avatar"),
     followingIds.length
       ? Article.find({ author: { $in: followingIds } })
           .sort({ createdAt: -1 })
           .limit(fetchCap)
-          .populate("author", "username email bio avatar")
+          .populate("author", "username bio avatar")
       : Promise.resolve([]),
   ]);
 
@@ -337,10 +335,10 @@ export async function getDashboardSocial(userId: string) {
   const [followingRows, followerRows] = await Promise.all([
     Follow.find({ follower: userId })
       .sort({ createdAt: -1 })
-      .populate("following", "username email bio avatar"),
+      .populate("following", "username bio avatar"),
     Follow.find({ following: userId })
       .sort({ createdAt: -1 })
-      .populate("follower", "username email bio avatar"),
+      .populate("follower", "username bio avatar"),
   ]);
 
   const following = followingRows
@@ -429,7 +427,6 @@ export async function getDashboardHistory(userId: string, page = 1, limit = 20) 
           author: {
             _id: "$author._id",
             username: "$author.username",
-            email: "$author.email",
             bio: "$author.bio",
             avatar: "$author.avatar",
           },
