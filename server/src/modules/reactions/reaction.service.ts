@@ -18,7 +18,7 @@ function articleAuthorId(article: { author: unknown }): string {
 export async function toggleLikeArticle(userId: string, slug: string) {
     const article = await Article.findOne({ slug }).populate(
         "author",
-        "username email bio avatar"
+        "username bio avatar"
     );
 
     if(!article) {
@@ -68,7 +68,7 @@ export async function toggleLikeArticle(userId: string, slug: string) {
 export async function toggleFavoriteArticle(userId: string, slug: string) {
     const article = await Article.findOne({ slug }).populate(
       "author",
-      "username email bio avatar"
+      "username bio avatar"
     );
   
     if (!article) {

@@ -10,7 +10,6 @@ export type CommentSortMode = "likes" | "newest";
 type CommentAuthor = {
   _id: unknown;
   username: string;
-  email: string;
   bio?: string;
   avatar?: string;
 };
@@ -33,7 +32,6 @@ function sanitizeAuthor(author: CommentAuthor) {
   return {
     id: String(author._id),
     username: author.username,
-    email: author.email,
     bio: author.bio ?? "",
     avatar: author.avatar ?? "",
   };
@@ -57,23 +55,6 @@ async function getDepthFromRoot(commentId: mongoose.Types.ObjectId): Promise<num
     current = row.parentComment ?? null;
   }
   return depth;
-}
-
-async function collectDescendantIds(articleId: mongoose.Types.ObjectId, rootId: string): Promise<mongoose.Types.ObjectId[]> {
-  const root = new mongoose.Types.ObjectId(rootId);
-  const all: mongoose.Types.ObjectId[] = [];
-  const queue: mongoose.Types.ObjectId[] = [root];
-  while (queue.length) {
-    const id = queue.shift()!;
-    all.push(id);
-    const children = await Comment.find({ article: articleId, parentComment: id })
-      .select("_id")
-      .lean();
-    for (const c of children) {
-      queue.push(c._id as mongoose.Types.ObjectId);
-    }
-  }
-  return all;
 }
 
 type LeanComment = {
@@ -192,7 +173,7 @@ export async function getCommentsByArticleSlug(
 
   const rows = (await Comment.find({ article: article._id })
     .sort({ createdAt: 1 })
-    .populate("author", "username email bio avatar")
+    .populate("author", "username bio avatar")
     .lean()) as unknown as LeanComment[];
 
   let comments = buildTree(rows, userId, sort);
@@ -242,7 +223,7 @@ export async function createComment(
 
   const populatedComment = await Comment.findById(comment._id).populate(
     "author",
-    "username email bio avatar"
+    "username bio avatar"
   );
 
   if (!populatedComment) {
@@ -294,13 +275,12 @@ export async function deleteComment(userId: string, slug: string, commentId: str
     throw new AppError("Forbidden: You can only delete your own comment", 403);
   }
 
-  const ids = await collectDescendantIds(article._id as mongoose.Types.ObjectId, commentId);
-  await Comment.deleteMany({ _id: { $in: ids } });
+  await Comment.deleteOne({ _id: comment._id });
 
-  article.commentsCount = Math.max(0, (article.commentsCount ?? 0) - ids.length);
+  article.commentsCount = Math.max(0, (article.commentsCount ?? 0) - 1);
   if (
     article.pinnedComment &&
-    ids.some((id) => String(id) === String(article.pinnedComment))
+    String(comment._id) === String(article.pinnedComment)
   ) {
     article.pinnedComment = null;
   }
@@ -308,7 +288,7 @@ export async function deleteComment(userId: string, slug: string, commentId: str
 
   return {
     deleted: true,
-    removedCount: ids.length,
+    removedCount: 1,
   };
 }
 
