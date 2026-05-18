@@ -9,7 +9,6 @@ type PublicProfileResponse = {
         user: {
             id: string;
             username: string;
-            email: string;
             bio?: string;
             avatar?: string;
             followersCount: number;
@@ -25,7 +24,6 @@ type PublicProfileArticlesResponse = {
         user: {
             id: string;
             username: string;
-            email: string;
             bio?: string;
             avatar?: string;
             followersCount: number;

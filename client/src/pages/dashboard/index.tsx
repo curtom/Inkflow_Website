@@ -269,7 +269,6 @@ export default function DashboardPage() {
                       <p className="font-medium text-ink hover:text-terracotta">
                         {item.user.username}
                       </p>
-                      <p className="truncate text-xs text-stone">{item.user.email}</p>
                     </div>
                   </Link>
                   <Button
@@ -317,7 +316,6 @@ export default function DashboardPage() {
                       <p className="font-medium text-ink hover:text-terracotta">
                         {item.user.username}
                       </p>
-                      <p className="truncate text-xs text-stone">{item.user.email}</p>
                     </div>
                   </Link>
                 </div>
