@@ -169,7 +169,6 @@ export default function SearchPage() {
                       <p className="font-editorial text-2xl font-medium text-ink">
                         {user.username}
                       </p>
-                      <p className="text-stone">{user.email}</p>
                       <p className="mt-1 text-charcoal">
                         {user.bio || "No bio yet."}
                       </p>
@@ -257,7 +256,6 @@ export default function SearchPage() {
                     <p className="truncate text-lg font-semibold text-ink">
                       {user.username}
                     </p>
-                    <p className="truncate text-sm text-stone">{user.email}</p>
                     <p className="mt-1 line-clamp-2 text-sm text-charcoal">
                       {user.bio || "No bio yet."}
                     </p>
