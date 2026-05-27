@@ -45,10 +45,52 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             set -e
+
             cd ~/Inkflow_Website
             git fetch origin
             git reset --hard origin/master
+
             cd server
-            docker compose build
-            docker compose up -d
-            docker image prune -f
+
+            echo "📦 Pre-pull base image"
+            docker pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/mongo:7.0 || true
+
+            echo "💾 Saving current image for rollback..."
+            ROLLBACK_IMAGE=$(docker inspect --format='{{.Image}}' inkflow-backend 2>/dev/null || true)
+            if [ -n "$ROLLBACK_IMAGE" ]; then
+              echo "Rollback checkpoint: $ROLLBACK_IMAGE"
+            else
+              echo "No existing container found (first deploy, rollback unavailable)"
+            fi
+
+            echo "🔨 Build backend"
+            docker compose --project-name inkflow build
+
+            echo "🚀 Start services"
+            docker compose --project-name inkflow up -d
+
+            echo "⏳ Wait for service..."
+            sleep 10
+
+            echo "🧪 Health check"
+            if curl -sf http://127.0.0.1:5000/api/v1/health; then
+              echo "✅ Deploy successful"
+              docker image prune -f
+            else
+              echo "❌ Health check failed, rolling back..."
+              docker compose --project-name inkflow down || true
+
+              if [ -n "$ROLLBACK_IMAGE" ]; then
+                echo "🔁 Restoring previous version..."
+                docker tag "$ROLLBACK_IMAGE" inkflow-backend:latest
+                docker compose --project-name inkflow up -d --no-build
+                sleep 5
+                curl -sf http://127.0.0.1:5000/api/v1/health \
+                  && echo "✅ Service restored successfully" \
+                  || echo "⚠️  Rollback service also unhealthy, manual intervention required"
+              else
+                echo "⚠️  No rollback image available, manual intervention required"
+              fi
+
+              exit 1
+            fi

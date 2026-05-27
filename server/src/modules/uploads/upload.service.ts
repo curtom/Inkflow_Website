@@ -2,6 +2,22 @@ import type { UploadApiResponse } from "cloudinary";
 import cloudinary from "../../config/cloudinary";
 import { AppError } from "../../common/utils/app-error";
 
+const ALLOWED_IMAGE_CT = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/avif",
+]);
+
+export function normalizeAndAssertImageContentType(raw: string): string {
+    const ct = raw.split(";")[0]!.trim().toLowerCase();
+    if (!ALLOWED_IMAGE_CT.has(ct)) {
+        throw new AppError("Invalid content type for image upload", 400);
+    }
+    return ct;
+}
+
 function uploadBufferToCloudinary(buffer: Buffer): Promise<UploadApiResponse> {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(

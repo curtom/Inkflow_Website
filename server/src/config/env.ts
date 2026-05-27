@@ -89,4 +89,18 @@ export const env = {
         const v = getOptionalEnv("COMMUNITY_CLASSIFIER_DEBUG")?.toLowerCase();
         return v === "true" || v === "1" || v === "yes";
     })(),
+    /** 浏览器直传对象存储：`oss` | `cos`；不设则仅走 Cloudinary / 服务端转存 */
+    directUploadProvider: getOptionalEnv("DIRECT_UPLOAD_PROVIDER"),
+    ossRegion: getOptionalEnv("OSS_REGION"),
+    ossAccessKeyId: getOptionalEnv("OSS_ACCESS_KEY_ID"),
+    ossAccessKeySecret: getOptionalEnv("OSS_ACCESS_KEY_SECRET"),
+    ossBucket: getOptionalEnv("OSS_BUCKET"),
+    /** 对外访问域名（建议填 CDN HTTPS 根，如 https://img.example.com，无末尾 /） */
+    ossPublicBase: getOptionalEnv("OSS_PUBLIC_BASE"),
+    ossEndpoint: getOptionalEnv("OSS_ENDPOINT"),
+    cosSecretId: getOptionalEnv("COS_SECRET_ID"),
+    cosSecretKey: getOptionalEnv("COS_SECRET_KEY"),
+    cosRegion: getOptionalEnv("COS_REGION"),
+    cosBucket: getOptionalEnv("COS_BUCKET"),
+    cosPublicBase: getOptionalEnv("COS_PUBLIC_BASE"),
 };

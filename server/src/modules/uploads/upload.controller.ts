@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { successResponse } from "../../common/utils/api-response";
-import { uploadImageToCloudinary } from "./upload.service";
+import { normalizeAndAssertImageContentType, uploadImageToCloudinary } from "./upload.service";
+import { createPresignedImageUpload } from "./upload.direct.service";
 
 export async function uploadImageController(
    req: Request,
@@ -19,7 +20,21 @@ export async function uploadImageController(
        const result = await uploadImageToCloudinary(file);
 
        res.status(200).json(successResponse("Image uploaded successfully", result));
-    } catch(error) {
+    } catch (error) {
           next(error);
+    }
+}
+
+export async function presignUploadController(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) {
+    try {
+        const contentType = normalizeAndAssertImageContentType(req.body.contentType as string);
+        const result = await createPresignedImageUpload(contentType);
+        res.status(200).json(successResponse("Presigned upload URL created", result));
+    } catch (error) {
+        next(error);
     }
 }

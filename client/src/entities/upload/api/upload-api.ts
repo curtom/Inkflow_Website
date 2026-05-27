@@ -14,8 +14,25 @@ type CloudinaryDirectResponse = {
     error?: { message?: string };
 };
 
+type PresignApiResponse = {
+    message: string;
+    data: {
+        uploadUrl: string;
+        publicUrl: string;
+        key: string;
+        expiresIn: number;
+        /** 服务端用于签名的类型，PUT 必须与此一致（旧版接口无此字段时用请求体里的类型并小写化） */
+        contentType?: string;
+    };
+};
+
 const cloudName = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined)?.trim();
 const uploadPreset = (import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string | undefined)?.trim();
+
+const useDirectOssCos = (() => {
+    const v = (import.meta.env.VITE_DIRECT_UPLOAD as string | undefined)?.trim().toLowerCase();
+    return v === "1" || v === "true" || v === "oss" || v === "cos" || v === "yes";
+})();
 
 async function uploadViaCloudinaryDirect(
     file: File,
@@ -47,7 +64,44 @@ async function uploadViaCloudinaryDirect(
     };
 }
 
+async function uploadViaPresignedOssCos(file: File): Promise<UploadImageResponse> {
+    const contentType = file.type || "image/jpeg";
+    const json = (await api.post("/uploads/presign", {
+        contentType,
+    })) as unknown as PresignApiResponse;
+
+    const { uploadUrl, publicUrl, key, contentType: signedContentType } = json.data;
+    const putContentType =
+        signedContentType ?? contentType.split(";")[0]!.trim().toLowerCase();
+    const put = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+            "Content-Type": putContentType,
+        },
+    });
+
+    if (!put.ok) {
+        const errText = await put.text().catch(() => "");
+        throw new Error(
+            `Object storage upload failed: ${put.status} ${put.statusText}${errText ? ` ${errText.slice(0, 200)}` : ""}`
+        );
+    }
+
+    return {
+        message: "Image uploaded successfully",
+        data: {
+            url: publicUrl,
+            publicId: key,
+        },
+    };
+}
+
 export async function uploadImageRequest(file: File) {
+    if (useDirectOssCos) {
+        return uploadViaPresignedOssCos(file);
+    }
+
     if (cloudName && uploadPreset) {
         return uploadViaCloudinaryDirect(file, cloudName, uploadPreset);
     }
