@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Redo2, Undo2 } from "lucide-react";
 import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,7 +6,6 @@ import Input from "@/shared/ui/input";
 import Button from "@/shared/ui/button";
 import ImageUploadField from "@/features/upload-image/ui/image-upload-field";
 import MarkdownToolbar from "@/features/markdown-editor/ui/markdown-toolbar";
-import MarkdownPreview from "@/features/markdown-editor/ui/markdown-preview";
 import {
   buildContentImageSnippet,
   listImageTokens,
@@ -45,6 +44,8 @@ import {
   type DraftData,
 } from "@/features/create-article/lib/draft";
 import { suggestCommunityTagsRequest } from "@/features/community/api/community-api";
+
+const MarkdownPreview = lazy(() => import("@/features/markdown-editor/ui/markdown-preview"));
 
 type ArticleFormProps = {
   defaultValues?: Partial<ArticleFormValues>;
@@ -717,11 +718,19 @@ export default function ArticleForm({
               ) : null}
             </div>
           ) : (
-            <MarkdownPreview
-              content={previewMarkdown}
-              previewBodyImageOffset={previewBodyImageOffset}
-              onPreviewBodyImageResize={handlePreviewBodyImageResize}
-            />
+            <Suspense
+              fallback={
+                <div className="min-h-[420px] rounded-b-3xl bg-ivory px-6 py-6 text-sm text-stone">
+                  Loading preview...
+                </div>
+              }
+            >
+              <MarkdownPreview
+                content={previewMarkdown}
+                previewBodyImageOffset={previewBodyImageOffset}
+                onPreviewBodyImageResize={handlePreviewBodyImageResize}
+              />
+            </Suspense>
           )}
         </div>
       </div>

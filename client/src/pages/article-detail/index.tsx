@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteArticleRequest, getArticleBySlugRequest } from "@/entities/article/api/article-api";
-import MarkdownPreview from "@/features/markdown-editor/ui/markdown-preview";
 import {
   getCommentsByArticleRequest,
   createCommentRequest,
@@ -20,6 +19,8 @@ import CommentList from "@/widgets/comment-list";
 import AddCommentForm from "@/features/add-comment/ui/add-comment-form";
 import { Heart, Bookmark, HashIcon, MessageCircle } from "lucide-react";
 import type { CommentSort } from "@/entities/comment/types/comment";
+
+const MarkdownPreview = lazy(() => import("@/features/markdown-editor/ui/markdown-preview"));
 
 export default function ArticleDetailPage() {
   const { slug = "" } = useParams();
@@ -243,7 +244,9 @@ export default function ArticleDetailPage() {
         <div className="border-t border-border-cream" />
 
         <div className="px-8 py-8">
-          <MarkdownPreview content={article.content} variant="article" />
+          <Suspense fallback={<p className="text-sm text-stone">Loading article body...</p>}>
+            <MarkdownPreview content={article.content} variant="article" />
+          </Suspense>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 border-t border-border-cream px-8 py-5">
