@@ -145,7 +145,7 @@ export default function ArticleForm({
       isApplyingHistoryRef.current = false;
       setHistoryVersion((x) => x + 1);
     });
-  }, [defaultValues, reset]);
+  }, [defaultValues, reset, getValues]);
 
   useEffect(() => {
     if (isApplyingHistoryRef.current) {
@@ -169,7 +169,7 @@ export default function ArticleForm({
       setHistoryVersion((x) => x + 1);
     }, 420);
     return () => window.clearTimeout(timer);
-  }, [historyWatchSerialized]);
+  }, [historyWatchSerialized, getValues]);
 
   const canUndo = pastRef.current.length > 0;
   const canRedo = futureRef.current.length > 0;
@@ -489,7 +489,11 @@ export default function ArticleForm({
     if (!file) return;
     try {
       setImageUploading(true);
-      const response = await uploadImageRequest(file);
+      const response = await uploadImageRequest(file, {
+        maxWidth: 1400,
+        maxHeight: 1400,
+        quality: 0.82,
+      });
       insertImageMarkdown(
         response.data.url,
         imageAlt.trim() || file.name.replace(/\.[^.]+$/, ""),

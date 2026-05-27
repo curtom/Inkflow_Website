@@ -46,6 +46,8 @@ export default function ArticleCard({ article, compact = false, profilePin }: Pr
                     <img
                       src={article.author.avatar}
                       alt={article.author.username}
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover"
                     />
                   ) : (
@@ -107,6 +109,8 @@ export default function ArticleCard({ article, compact = false, profilePin }: Pr
             <img
               src={article.coverImage}
               alt={article.title}
+              loading="lazy"
+              decoding="async"
               className={cn(
                 "shrink-0 rounded-xl object-cover shadow-[0_0_0_1px_#f0eee6]",
                 compact ? "h-24 w-36" : "h-24 w-24"

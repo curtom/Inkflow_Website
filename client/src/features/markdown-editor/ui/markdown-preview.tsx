@@ -228,6 +228,8 @@ export default function MarkdownPreview({
                 alt={alt ?? ""}
                 width={width}
                 height={height}
+                loading="lazy"
+                decoding="async"
                 style={imageStyle}
                 className={cn(
                   "my-6 max-w-full rounded-2xl shadow-whisper",

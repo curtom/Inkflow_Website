@@ -150,6 +150,8 @@ export default function EditorResizablePreviewImage({
         alt={alt ?? ""}
         width={undefined}
         height={imageHeight ?? undefined}
+        loading="lazy"
+        decoding="async"
         onLoad={(e) => {
           void onImgLoad(e.currentTarget);
         }}

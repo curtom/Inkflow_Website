@@ -1,4 +1,8 @@
 import { api } from "@/shared/api/axios";
+import {
+    compressImageFile,
+    type CompressImageOptions,
+} from "@/entities/upload/lib/compress-image";
 
 type UploadImageResponse = {
     message: string;
@@ -97,17 +101,22 @@ async function uploadViaPresignedOssCos(file: File): Promise<UploadImageResponse
     };
 }
 
-export async function uploadImageRequest(file: File) {
+export async function uploadImageRequest(
+    file: File,
+    compressOptions?: CompressImageOptions
+) {
+    const uploadFile = await compressImageFile(file, compressOptions);
+
     if (useDirectOssCos) {
-        return uploadViaPresignedOssCos(file);
+        return uploadViaPresignedOssCos(uploadFile);
     }
 
     if (cloudName && uploadPreset) {
-        return uploadViaCloudinaryDirect(file, cloudName, uploadPreset);
+        return uploadViaCloudinaryDirect(uploadFile, cloudName, uploadPreset);
     }
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", uploadFile);
 
     return (await api.post("/uploads/image", formData, {
         headers: {

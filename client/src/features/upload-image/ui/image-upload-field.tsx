@@ -21,7 +21,11 @@ export default function ImageUploadField({
 
      try {
         setUploading(true);
-        const response = await uploadImageRequest(file);
+        const response = await uploadImageRequest(file, {
+          maxWidth: 1600,
+          maxHeight: 1600,
+          quality: 0.82,
+        });
         onUploaded(response.data.url);
      } catch(error) {
         console.error("Failed to upload image:", error);
@@ -41,6 +45,8 @@ export default function ImageUploadField({
             <img 
               src={value}
               alt="Upload preview"
+              loading="lazy"
+              decoding="async"
               className="h-14 w-24 rounded-lg border border-border-cream object-cover shadow-whisper"
             />
         ): null}
