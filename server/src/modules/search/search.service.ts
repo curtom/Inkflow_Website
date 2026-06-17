@@ -61,7 +61,6 @@ export async function searchStories({
         author: {
           id: "$author._id",
           username: "$author.username",
-          email: "$author.email",
           bio: "$author.bio",
           avatar: "$author.avatar",
         },
@@ -115,7 +114,6 @@ export async function searchUsers({
       $project: {
         id: "$_id",
         username: 1,
-        email: 1,
         bio: 1,
         avatar: 1,
       },
