@@ -143,7 +143,7 @@ export default function CommentList({
         <ConfirmDialog
           open
           title="删除评论"
-          description="确定要删除这条评论吗？会同时删除其下所有回复，且无法恢复。"
+          description="确定要删除这条评论吗？其下回复会保留，且此操作无法恢复。"
           confirmLabel="删除"
           cancelLabel="取消"
           variant="danger"

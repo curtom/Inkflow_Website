@@ -59,23 +59,6 @@ async function getDepthFromRoot(commentId: mongoose.Types.ObjectId): Promise<num
   return depth;
 }
 
-async function collectDescendantIds(articleId: mongoose.Types.ObjectId, rootId: string): Promise<mongoose.Types.ObjectId[]> {
-  const root = new mongoose.Types.ObjectId(rootId);
-  const all: mongoose.Types.ObjectId[] = [];
-  const queue: mongoose.Types.ObjectId[] = [root];
-  while (queue.length) {
-    const id = queue.shift()!;
-    all.push(id);
-    const children = await Comment.find({ article: articleId, parentComment: id })
-      .select("_id")
-      .lean();
-    for (const c of children) {
-      queue.push(c._id as mongoose.Types.ObjectId);
-    }
-  }
-  return all;
-}
-
 type LeanComment = {
   _id: mongoose.Types.ObjectId;
   content: string;
@@ -294,13 +277,16 @@ export async function deleteComment(userId: string, slug: string, commentId: str
     throw new AppError("Forbidden: You can only delete your own comment", 403);
   }
 
-  const ids = await collectDescendantIds(article._id as mongoose.Types.ObjectId, commentId);
-  await Comment.deleteMany({ _id: { $in: ids } });
+  await Comment.updateMany(
+    { article: article._id, parentComment: comment._id },
+    { $set: { parentComment: comment.parentComment ?? null } }
+  );
+  await Comment.deleteOne({ _id: comment._id });
 
-  article.commentsCount = Math.max(0, (article.commentsCount ?? 0) - ids.length);
+  article.commentsCount = Math.max(0, (article.commentsCount ?? 0) - 1);
   if (
     article.pinnedComment &&
-    ids.some((id) => String(id) === String(article.pinnedComment))
+    String(comment._id) === String(article.pinnedComment)
   ) {
     article.pinnedComment = null;
   }
@@ -308,7 +294,7 @@ export async function deleteComment(userId: string, slug: string, commentId: str
 
   return {
     deleted: true,
-    removedCount: ids.length,
+    removedCount: 1,
   };
 }
 
